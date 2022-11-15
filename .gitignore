@@ -1,0 +1,11 @@
+*~
+*.Rhistory
+*.DS_Store
+*.aux
+*.log
+*.bbl
+*.blg
+*.toc
+*.synctex.gz
+*_files
+*.html
