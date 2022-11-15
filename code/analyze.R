@@ -1,5 +1,8 @@
 library(tidyverse)
+library(Rcpp)
 
+
+sourceCpp("permutation_tests.cpp")
 
 participation_gap <- function(rating_data) {
   rating_data %>%
@@ -56,7 +59,7 @@ rating_data <- read_rds("../data/rating_data.rds") %>%
   filter(fed %in% federations(., 30))
 
 rating_data %>%
-  compare(pvalue, test = function(f, m) wilcox.test(f, m)$p.value) %>%
+  compare(pvalue, test = function(f, m) permtest(f, m, 5000)$p.value) %>%
   left_join(participation_gap(rating_data), by = "fed") %>%
   left_join(compare(rating_data, diff, function(f, m) mean(f) - mean(m)), by = "fed") %>%
   { show(gap_chart(.)); . } %>%
