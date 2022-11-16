@@ -3,15 +3,18 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-List permtest(NumericVector x, NumericVector y, int perms = 10000) {
-  int i, nx = x.size(), ny = y.size(), pcumul = 0;
-  double diffs, observed_diff = abs(mean(x) - mean(y));
-  NumericVector pool(nx + ny);
+double permtest(NumericVector x, NumericVector y, Function fun, int perms = 10000) {
+  int i, j, nx = x.size(), ny = y.size(), n = nx + ny, tally = 0;
+  double diffs, observed_diff = abs(as<double>(fun(x)) - as<double>(fun(y)));
+  NumericVector pool(n), permut(n), randx(nx), randy(ny);
   for (i = 0; i < nx; i++) pool[i] = x[i];
-  for (i = nx; i < nx + ny; i++) pool[i] = y[i];
+  for (i = nx; i < n; i++) pool[i] = y[i];
   for (i = 0; i < perms; i++) {
-    diffs = abs(mean(sample(pool, nx)) - mean(sample(pool, ny)));
-    if (diffs >= observed_diff) pcumul++;
+    permut = sample(pool, n);
+    for (j = 0; j < nx; j++) randx[j] = permut[j];
+    for (j = nx; j < n; j++) randy[j] = permut[j];
+    diffs = abs(as<double>(fun(randx)) - as<double>(fun(randy)));
+    if (diffs >= observed_diff) tally++;
   }
-  return List::create(Named("p.value") = (double)pcumul / (double)perms);
+  return (double)tally / (double)perms;
 }

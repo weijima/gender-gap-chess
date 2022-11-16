@@ -1,8 +1,8 @@
 library(tidyverse)
-library(Rcpp)
+#library(Rcpp)
 
 
-sourceCpp("permutation_tests.cpp")
+#sourceCpp("permutation_tests.cpp")
 
 participation_gap <- function(rating_data) {
   rating_data %>%
@@ -19,24 +19,29 @@ federations <- function(rating_data, min_players) {
     pull(fed)
 }
 
-compare <- function(rating_data, colname, test = function(f, m) ks.test(f, m)$p.value) {
+compare <- function(rating_data, colname, test = permut.test) {
   rating_data %>%
     select(fed, sex, rating) %>%
     pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
     transmute(fed, "{{colname}}" := map2_dbl(`F`, `M`, test))
 }
 
-permut_test <- function(x, y, perms = 10000, plot = FALSE) {
+permut.test <- function(x, y, fun = mean, perms = 10000, plot = FALSE) {
   nx <- length(x)
   ny <- length(y)
+  n <- nx + ny
   pool <- c(x, y)
-  observed_diff <- abs(mean(x) - mean(y))
+  observed_diff <- abs(fun(x) - fun(y))
   diffs <- rep(0, times = perms)
-  for (i in 1:length(diffs)) {
-    diffs[i] <- abs(mean(sample(pool, size = nx)) - mean(sample(pool, size = ny)))
+  for (i in 1:perms) {
+    permut <- sample(pool)
+    diffs[i] <- abs(fun(permut[1:nx]) - fun(permut[(nx + 1):n]))
   }
-  if (plot) { hist(diffs, breaks = 30); abline(v = observed_diff, col = "red") }
-  list(p.value = mean(diffs >= observed_diff))
+  if (plot) {
+    hist(diffs, breaks = 30, xlim = range(diffs) + c(0, observed_diff))
+    abline(v = observed_diff, col = "red")
+  }
+  return(mean(observed_diff <= diffs))
 }
 
 gap_chart <- function(gap_data, signif = 0.001, ylab = "rating difference") {
@@ -59,10 +64,10 @@ rating_data <- read_rds("../data/rating_data.rds") %>%
   filter(fed %in% federations(., 30))
 
 rating_data %>%
-  compare(pvalue, test = function(f, m) permtest(f, m, 5000)$p.value) %>%
+  compare(pvalue, test = function(f, m) permut.test(f, m, fun, 5000)) %>%
   left_join(participation_gap(rating_data), by = "fed") %>%
   left_join(compare(rating_data, diff, function(f, m) mean(f) - mean(m)), by = "fed") %>%
   { show(gap_chart(.)); . } %>%
-  filter(pvalue <= 0.001) %>%
+  filter(pvalue < 0.001) %>%
   arrange(participation_gap) %>%
   print(n = Inf)
