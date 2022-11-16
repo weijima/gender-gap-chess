@@ -1,6 +1,9 @@
 #include <Rcpp.h>
 #include <math.h>
+#include <bits/stdc++.h>
 using namespace Rcpp;
+
+// [[Rcpp::plugins("cpp11")]]
 
 // [[Rcpp::export]]
 double permtest(NumericVector x, NumericVector y, Function fun, int perms = 10000) {
@@ -12,7 +15,7 @@ double permtest(NumericVector x, NumericVector y, Function fun, int perms = 1000
   for (i = 0; i < perms; i++) {
     permut = sample(pool, n);
     for (j = 0; j < nx; j++) randx[j] = permut[j];
-    for (j = nx; j < n; j++) randy[j] = permut[j];
+    for (j = 0; j < ny; j++) randy[j] = permut[j + nx];
     diffs = abs(as<double>(fun(randx)) - as<double>(fun(randy)));
     if (diffs >= observed_diff) tally++;
   }

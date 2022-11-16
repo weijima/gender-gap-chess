@@ -1,8 +1,8 @@
 library(tidyverse)
-#library(Rcpp)
+library(Rcpp)
 
 
-#sourceCpp("permutation_tests.cpp")
+sourceCpp("permutation_tests.cpp")
 
 participation_gap <- function(rating_data) {
   rating_data %>%
