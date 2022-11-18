@@ -1,8 +1,8 @@
 library(tidyverse)
-library(Rcpp)
+#library(Rcpp)
 
 
-sourceCpp("permutation_tests.cpp")
+#sourceCpp("permutation_tests.cpp")
 
 participation_gap <- function(rating_data) {
   rating_data %>%
@@ -19,14 +19,14 @@ federations <- function(rating_data, min_players) {
     pull(fed)
 }
 
-compare <- function(rating_data, colname, test = permut.test) {
+compare <- function(rating_data, colname, test = permut_test) {
   rating_data %>%
     select(fed, sex, rating) %>%
     pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
     transmute(fed, "{{colname}}" := map2_dbl(`F`, `M`, test))
 }
 
-permut.test <- function(x, y, fun = mean, perms = 10000, plot = FALSE) {
+permut_test <- function(x, y, fun = mean, perms = 1000, plot = FALSE) {
   nx <- length(x)
   ny <- length(y)
   n <- nx + ny
@@ -44,7 +44,7 @@ permut.test <- function(x, y, fun = mean, perms = 10000, plot = FALSE) {
   return(mean(observed_diff <= diffs))
 }
 
-gap_chart <- function(gap_data, signif = 0.001, ylab = "rating difference") {
+gap_chart <- function(gap_data, signif = 0.001) {
   ymax <- max(abs(gap_data$diff))
   gap_data %>%
     mutate(rating_gap = if_else(pvalue < signif, "significant", "nonsignificant")) %>%
@@ -53,21 +53,36 @@ gap_chart <- function(gap_data, signif = 0.001, ylab = "rating difference") {
     geom_text(fontface = "bold", alpha = 0.7) +
     geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.4) +
     scale_x_continuous(name = "participation gap", labels = scales::percent) +
-    scale_y_continuous(name = ylab, limits = c(-ymax, ymax)) +
+    scale_y_continuous(name = "rating difference", limits = c(-ymax, ymax)) +
     scale_colour_manual(values = c("firebrick", "gray55"), name = "rating gap") +
     theme_bw()
 }
 
+analyze_ratings <- function(rating_data, fn = mean, signif = 0.001, perms = 1000,
+                            plot = TRUE) {
+  rating_data %>%
+    compare(pvalue, test = function(f, m) permut_test(f, m, fn, perms)) %>%
+    left_join(participation_gap(rating_data), by = "fed") %>%
+    left_join(compare(rating_data, diff, function(f, m) fn(f) - fn(m)), by = "fed") %>%
+    { if (plot) show(gap_chart(.)); . } %>%
+    filter(pvalue < signif) %>%
+    arrange(participation_gap)
+}
 
-rating_data <- read_rds("../data/rating_data.rds") %>%
-  filter(active, born != 0, born <= 1999, rating >= 1400) %>%
-  filter(fed %in% federations(., 30))
+restrict_data <- function(rating_data, max_byear = 1999, min_rating = 1400,
+                          min_players = 30, include_inactive = FALSE,
+                          birth_uncertain = FALSE) {
+  rating_data %>%
+    filter(if (include_inactive) active else TRUE) %>%
+    filter(if (birth_uncertain) born != 0 else TRUE) %>%
+    filter(born <= max_byear, rating >= min_rating, active) %>%
+    filter(fed %in% federations(., min_players))
+}
+
+
+rating_data <- read_rds("../data/rating_data.rds")
 
 rating_data %>%
-  compare(pvalue, test = function(f, m) permut.test(f, m, fun, 5000)) %>%
-  left_join(participation_gap(rating_data), by = "fed") %>%
-  left_join(compare(rating_data, diff, function(f, m) mean(f) - mean(m)), by = "fed") %>%
-  { show(gap_chart(.)); . } %>%
-  filter(pvalue < 0.001) %>%
-  arrange(participation_gap) %>%
+  restrict_data() %>%
+  analyze_ratings(function(x) mean(sort(x, decreasing = TRUE)[1:10]), perms = 1000) %>%
   print(n = Inf)
