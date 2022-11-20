@@ -1,0 +1,241 @@
+---
+title: "Chess data explorer"
+author: "György Barabás"
+format:
+  html:
+    theme: cosmo
+    standalone: true
+knitr:
+  opts_chunk:
+    message: false
+    warning: false
+server: shiny
+---
+
+
+# Global
+
+```{r}
+#| panel: sidebar
+sliderInput("max_byear_glob", "Maximum year of birth", min = 1950, max = 2019,
+            value = 1999, step = 1, sep = "", width = "98%")
+sliderInput("min_rating_glob", "Minimum rating", min = 1000, max = 2400,
+            value = 1400, step = 10, sep = "", width = "98%")
+selectInput("test_glob", "Test", c("Kolmogorov-Smirnov", "Mann-Whitney"))
+selectInput("include_inactive_glob", "Include inactive players?", c("No", "Yes"))
+selectInput("birth_uncertain_glob", "Include players of unknown age?", c("No", "Yes"))
+```
+
+```{r}
+#| panel: fill
+plotOutput("gap_plot_global", height = "400px")
+```
+
+```{r}
+#| context: server
+library(tidyverse)
+
+
+restrict_data <- function(rating_data, max_byear = 1999, min_rating = 1400,
+                          include_inactive = FALSE, birth_uncertain = FALSE) {
+  rating_data %>%
+    filter(if (include_inactive) TRUE else active) %>%
+    filter(if (birth_uncertain) TRUE else born != 0) %>%
+    filter(born <= max_byear, rating >= min_rating)
+}
+
+plot_global_rating <- function(rating_data, max_byear = 2019, min_rating = 0,
+                               include_inactive = FALSE, birth_uncertain = FALSE,
+                               test = ks.test, pval_digits = 4, x = 2500, y = 0.0011) {
+  dat_restr <- rating_data %>%
+    restrict_data(max_byear, min_rating, include_inactive, birth_uncertain)
+  # Calculate mean ratings of women and men in a vector with entries "F" and "M"
+  mean_ratings <- dat_restr %>%
+    group_by(sex) %>%
+    summarise(mean_rating = mean(rating)) %>%
+    pivot_wider(names_from = sex, values_from = mean_rating) %>%
+    unlist()
+  # Perform test and extract its p-value
+  pval <- dat_restr %>%
+    select(sex, rating) %>%
+    pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
+    mutate(pval = map2_dbl(`F`, `M`, ~suppressWarnings(test(.x, .y)$p.value))) %>%
+    pull(pval)
+  # Create plot of results and return it from the function
+  dat_restr %>%
+    ggplot(aes(x = rating, colour = sex, fill = sex)) +
+    geom_histogram(aes(y = stat(density)),
+                   binwidth = 50, position = "identity", alpha = 0.2) +
+    geom_vline(xintercept = mean_ratings["F"], colour = "steelblue", size = 1) +
+    geom_vline(xintercept = mean_ratings["M"], colour = "goldenrod", size = 1) +
+    ggtitle(paste0("Difference of means: ", round(diff(mean_ratings), 1),
+                  ";  p-value: ", round(pval, pval_digits))) +
+    scale_colour_manual(values = c("steelblue", "goldenrod")) +
+    scale_fill_manual(values = c("steelblue", "goldenrod")) +
+    theme_bw(base_size = 18) +
+    theme(panel.grid = element_blank(), plot.title = element_text(size = 18))
+}
+
+
+rating_data <- read_rds("../../data/rating_data.rds")
+
+inactives_glob <- reactive(
+  if (input$include_inactive_glob == "No") FALSE else TRUE
+)
+
+uncertains_glob <- reactive(
+  if (input$birth_uncertain_glob == "No") FALSE else TRUE
+)
+
+which_test_glob <- reactive(
+  if (input$test_glob == "Mann-Whitney") {
+    wilcox.test
+  } else {
+    ks.test
+  }
+)
+
+output$gap_plot_global <- renderPlot({
+  plot_global_rating(rating_data, input$max_byear_glob, input$min_rating_glob,
+                     inactives_glob(), uncertains_glob(), which_test_glob())
+})
+```
+
+
+# By federation
+
+```{r}
+#| panel: sidebar
+sliderInput("max_byear", "Maximum year of birth", min = 1950, max = 2019,
+            value = 1999, step = 1, sep = "", width = "98%")
+sliderInput("min_rating", "Minimum rating", min = 1000, max = 2400,
+            value = 1400, step = 10, sep = "", width = "98%")
+sliderInput("min_players", "Minimum players per sex",
+            min = 10, max = 50, value = 30, step = 1, width = "98%")
+numericInput("signif", "Significance threshold", 0.001, min = 0, max = 1)
+selectInput("test", "Test statistic", c("mean", "median", "sd", "top1", "top10"))
+selectInput("include_inactive", "Include inactive players?", c("No", "Yes"))
+selectInput("birth_uncertain", "Include players of unknown age?", c("No", "Yes"))
+```
+
+```{r}
+#| panel: fill
+plotOutput("gap_plot", height = "530px")
+```
+
+```{r}
+#| context: server
+library(tidyverse)
+
+
+participation_gap <- function(rating_data) {
+  rating_data %>%
+    count(fed, sex, name = "no_of_players") %>%
+    pivot_wider(names_from = "sex", values_from = "no_of_players") %>%
+    replace_na(list(`F` = 0, `M` = 0)) %>%
+    mutate(participation_gap = `M` / (`F` + `M`))
+}
+
+federations <- function(rating_data, min_players) {
+  participation_gap(rating_data) %>%
+    mutate(no_minority = pmin(`F`, `M`)) %>%
+    filter(no_minority >= min_players) %>%
+    pull(fed)
+}
+
+compare <- function(rating_data, colname, test = permut_test) {
+  rating_data %>%
+    select(fed, sex, rating) %>%
+    pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
+    transmute(fed, "{{colname}}" := map2_dbl(`F`, `M`, test))
+}
+
+permut_test <- function(x, y, fun = mean, perms = 1000, plot = FALSE) {
+  nx <- length(x)
+  ny <- length(y)
+  n <- nx + ny
+  pool <- c(x, y)
+  observed <- fun(x) - fun(y)
+  diffs <- rep(0, times = perms)
+  for (i in 1:perms) {
+    permut <- sample(pool)
+    diffs[i] <- fun(permut[1:nx]) - fun(permut[(nx + 1):n])
+  }
+  if (plot) {
+    hist(diffs, breaks = 30, xlim = c(min(diffs, observed), max(diffs, observed)))
+    abline(v = observed, col = "red")
+  }
+  return(mean(observed <= diffs))
+}
+
+gap_chart <- function(gap_data, signif = 0.001) {
+  gap_data %>%
+    mutate(rating_gap = case_when(
+      pvalue < signif ~ "female-slanted",
+      pvalue > 1 - signif ~ "male-slanted",
+      TRUE ~ "nonsignificant"
+    )) %>%
+    ggplot(aes(x = participation_gap, y = diff, label = fed, colour = rating_gap)) +
+    geom_text(fontface = "bold", alpha = 0.7, size = 5) +
+    scale_x_continuous(name = "participation gap", labels = scales::percent) +
+    scale_y_continuous(name = "difference in rating statistic") +
+    scale_color_manual(values = c("blue4", "gray55", "firebrick"),
+                       name = "rating gap",
+                       limits = c("female-slanted", "nonsignificant", "male-slanted")) +
+    theme_bw(base_size = 18) +
+    theme(legend.position = "bottom")
+}
+
+analyze_ratings <- function(rating_data, fn = mean, perms = 1000) {
+  rating_data %>%
+    compare(pvalue, test = function(f, m) permut_test(f, m, fn, perms)) %>%
+    left_join(participation_gap(rating_data), by = "fed") %>%
+    left_join(compare(rating_data, diff, function(f, m) fn(f) - fn(m)), by = "fed")
+}
+
+restrict_data <- function(rating_data, max_byear = 1999, min_rating = 1400,
+                          min_players = 30, include_inactive = FALSE,
+                          birth_uncertain = FALSE) {
+  rating_data %>%
+    filter(if (include_inactive) TRUE else active) %>%
+    filter(if (birth_uncertain) TRUE else born != 0) %>%
+    filter(born <= max_byear, rating >= min_rating) %>%
+    filter(fed %in% federations(., min_players))
+}
+
+
+rating_data <- read_rds("../../data/rating_data.rds")
+
+
+
+inactives <- reactive(
+  if (input$include_inactive == "No") FALSE else TRUE
+)
+
+uncertains <- reactive(
+  if (input$birth_uncertain == "No") FALSE else TRUE
+)
+
+stats <- reactive(
+  if (input$test == "mean") {
+    mean
+  } else if (input$test == "median") {
+    median
+  } else if (input$test == "sd") {
+    sd
+  } else if (input$test == "top1") {
+    max
+  } else if (input$test == "top10") {
+    function(x) mean(tail(sort(x), 10))
+  }
+)
+
+output$gap_plot <- renderPlot({
+  rating_data %>%
+    restrict_data(input$max_byear, input$min_rating, input$min_players,
+                  inactives(), uncertains()) %>%
+    analyze_ratings(stats(), perms = 1000) %>%
+    gap_chart(input$signif)
+})
+```
+
