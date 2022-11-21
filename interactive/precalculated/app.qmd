@@ -138,7 +138,7 @@ gap_chart <- function(gap_data, signif = 0.001) {
     ggplot(aes(x = participation_gap, y = diff, label = fed, colour = rating_gap)) +
     geom_text(fontface = "bold", alpha = 0.7, size = 5) +
     scale_x_continuous(name = "participation gap", labels = scales::percent) +
-    scale_y_continuous(name = "rating difference") +
+    scale_y_continuous(name = "difference in rating statistic") +
     scale_color_manual(values = c("blue4", "gray55", "firebrick"),
                        name = "rating gap",
                        limits = c("female-slanted", "nonsignificant", "male-slanted")) +
