@@ -1,4 +1,5 @@
 library(tidyverse)
+library(ggfortify)
 
 
 participation_gap <- function(rating_data) {
@@ -92,3 +93,14 @@ with(
       print(n = Inf)
   }
 )
+
+
+# Regression to see effects of sex and experience
+rating_data %>%
+  restrict_data() %>%
+  group_by(fed, sex) %>%
+  summarise(rating = mean(rating), games = mean(games), .groups = "drop") %>%
+  lm(rating ~ sex + games, data = .) %>%
+  { print(anova(.))
+    suppressWarnings(autoplot(., smooth.colour = NA))
+  }
