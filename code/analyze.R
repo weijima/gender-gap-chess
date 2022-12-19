@@ -127,7 +127,8 @@ with(
 
 
 # Regression to see effects of sex and experience
-experienceByFed(rating_data, model = rating ~ sex + games + age + age2, min_players = 30,
+experienceByFed(rating_data, model = rating ~ sex + games + age + age2,
+                max_byear = 2019, min_rating = 0, min_players = 30,
                 print = TRUE, plot = TRUE, smooth.colour = NA, which = 1:3)
 
 modelDat <- crossing(max_byear = seq(1990, 2018, by = 1),
