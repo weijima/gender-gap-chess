@@ -1,5 +1,6 @@
 library(tidyverse)
 library(ggfortify)
+library(broom)
 
 
 participation_gap <- function(rating_data) {
@@ -59,9 +60,9 @@ gap_chart <- function(gap_data, signif = 0.001) {
     theme_bw()
 }
 
-analyze_ratings <- function(rating_data, fn = mean, perms = 1000) {
+analyze_ratings <- function(rating_data, fn = mean, perms = 1000, test = permut_test) {
   rating_data %>%
-    compare(pvalue, test = function(f, m) permut_test(f, m, fn, perms)) %>%
+    compare(pvalue, test = function(f, m) test(f, m, fn, perms)) %>%
     left_join(participation_gap(rating_data), by = "fed") %>%
     left_join(compare(rating_data, diff, function(f, m) fn(f) - fn(m)), by = "fed")
 }
@@ -76,12 +77,42 @@ restrict_data <- function(rating_data, max_byear = 1999, min_rating = 1400,
     filter(fed %in% federations(., min_players))
 }
 
+linearModel <- function(data, formula, print = FALSE, plot = FALSE, ...) {
+  fit <- lm(formula, data)
+  if (print) print(anova(fit))
+  if (plot) suppressWarnings(show(autoplot(fit, ...)))
+  fit
+}
+
+experienceByFed <- function(rating_data, model, max_byear = 1999, min_rating = 1400,
+                            min_players = 30, include_inactive = FALSE,
+                            birth_uncertain = FALSE, ...) {
+  rating_data %>%
+    restrict_data(max_byear, min_rating, min_players,
+                  include_inactive, birth_uncertain) %>%
+    group_by(fed, sex) %>%
+    summarise(rating = mean(rating), games = mean(games), age = mean(born),
+              age2 = age^2, .groups = "drop") %>%
+    linearModel(model, ...)
+}
+
+
+# rating_data <- read_rds("../data/fideratings.rds") %>%
+#   rename(id = fideid, fed = country, games = numgames, born = dob_yr, sex = sex_mode) %>%
+#   mutate(id = as.character(id)) %>%
+#   mutate(active = str_detect(flag, "i")) %>%
+#   mutate(year = as.integer(lubridate::year(listdate))) %>%
+#   mutate(month = as.integer(lubridate::month(listdate))) %>%
+#   select(-c(name1, flag, rtgchange, listdate, title, k))
+
 
 rating_data <- read_rds("../data/rating_data.rds")
 
 analysis <- rating_data %>%
+  # filter(year == 2009, month == 1) %>%
   restrict_data() %>%
-  analyze_ratings(function(x) mean(tail(sort(x), 10)), perms = 1000)
+  analyze_ratings(function(x) mean(x), perms = 5000, test = function(x, y, fn, perms)
+    wilcox.test(x, y, alternative = "greater")$p.value)
 
 
 with(
@@ -96,11 +127,28 @@ with(
 
 
 # Regression to see effects of sex and experience
-rating_data %>%
-  restrict_data() %>%
-  group_by(fed, sex) %>%
-  summarise(rating = mean(rating), games = mean(games), .groups = "drop") %>%
-  lm(rating ~ sex + games, data = .) %>%
-  { print(anova(.))
-    suppressWarnings(autoplot(., smooth.colour = NA))
-  }
+experienceByFed(rating_data, model = rating ~ sex + games + age + age2, min_players = 30,
+                print = TRUE, plot = TRUE, smooth.colour = NA, which = 1:3)
+
+modelDat <- crossing(max_byear = seq(1990, 2018, by = 1),
+                     min_rating = seq(1000, 1600, by = 50)) %>%
+  mutate(fit = map2(max_byear, min_rating,
+                    ~experienceByFed(rating_data, rating ~ sex + games + age + age2,
+                                     max_byear = .x, min_rating = .y))) %>%
+  mutate(fit = map(fit, compose(broom::tidy, anova)))
+
+modelDat %>%
+  unnest(fit) %>%
+  mutate(term = recode(term, "games" = "experience", "sex" = "gender",
+                       "age2" = "age squared")) %>%
+  filter(!is.na(p.value)) %>%
+  mutate(term = fct_relevel(term, "experience", "gender")) %>%
+  mutate(p.value = ifelse(p.value > 0.05, NA, p.value)) %>%
+  ggplot(aes(x = max_byear, y = min_rating, fill = log10(p.value))) +
+  geom_raster() +
+  facet_wrap(~ term) +
+  scale_x_continuous(name = "maximum year of birth", expand = c(0, 0)) +
+  scale_y_continuous(name = "minimum rating", expand = c(0, 0)) +
+  scale_fill_continuous(name = expression(paste(log[10](p)))) +
+  theme_bw(base_size = 14) +
+  theme(panel.grid = element_blank())
