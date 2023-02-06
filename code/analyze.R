@@ -1,6 +1,5 @@
 library(tidyverse)
 library(ggfortify)
-library(broom)
 
 
 participation_gap <- function(rating_data) {
@@ -128,21 +127,23 @@ with(
 
 # Regression to see effects of sex and experience
 experienceByFed(rating_data, model = rating ~ sex + games + age + age2,
-                max_byear = 2019, min_rating = 0, min_players = 30,
-                print = TRUE, plot = TRUE, smooth.colour = NA, which = 1:3)
+                max_byear = 2019, min_rating = 0, min_players = 30, print = TRUE,
+                plot = TRUE, smooth.colour = NA, which = 1:3, alpha = 0.3)
 
 modelDat <- crossing(max_byear = seq(1990, 2018, by = 1),
                      min_rating = seq(1000, 1600, by = 50)) %>%
   mutate(fit = map2(max_byear, min_rating,
                     ~experienceByFed(rating_data, rating ~ sex + games + age + age2,
                                      max_byear = .x, min_rating = .y))) %>%
-  mutate(fit = map(fit, compose(broom::tidy, anova)))
+  mutate(anova = map(fit, compose(broom::tidy, anova)),
+         summary = map(fit, compose(broom::tidy, summary)),
+         quality = map(fit, broom::glance))
 
 modelDat %>%
-  unnest(fit) %>%
+  unnest(anova) %>%
   mutate(term = recode(term, "games" = "experience", "sex" = "gender",
                        "age2" = "age squared")) %>%
-  filter(!is.na(p.value)) %>%
+  filter(!is.na(p.value), term != "age squared") %>%
   mutate(term = fct_relevel(term, "experience", "gender")) %>%
   mutate(p.value = ifelse(p.value > 0.05, NA, p.value)) %>%
   ggplot(aes(x = max_byear, y = min_rating, fill = log10(p.value))) +
@@ -151,5 +152,22 @@ modelDat %>%
   scale_x_continuous(name = "maximum year of birth", expand = c(0, 0)) +
   scale_y_continuous(name = "minimum rating", expand = c(0, 0)) +
   scale_fill_continuous(name = expression(paste(log[10](p)))) +
+  theme_bw(base_size = 14) +
+  theme(panel.grid = element_blank())
+
+modelDat %>%
+  mutate(quality = map(quality, ~select(.x, -p.value, -statistic))) %>%
+  unnest(c(summary, quality)) %>%
+  mutate(term = recode(term, "games" = "experience", "sexM" = "gender",
+                       "age2" = "age squared")) %>%
+  mutate(term = fct_relevel(term, "experience", "gender")) %>%
+  filter(!is.na(p.value), term == "gender") %>%
+  mutate(p.value = ifelse(p.value > 0.05, NA, p.value)) %>%
+  mutate(estimate = estimate * (p.value > 0)) %>%
+  ggplot(aes(x = max_byear, y = min_rating, fill = estimate)) +
+  geom_raster() +
+  facet_wrap(~ term) +
+  scale_x_continuous(name = "maximum year of birth", expand = c(0, 0)) +
+  scale_y_continuous(name = "minimum rating", expand = c(0, 0)) +
   theme_bw(base_size = 14) +
   theme(panel.grid = element_blank())
