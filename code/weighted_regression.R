@@ -26,12 +26,8 @@ restrict_data <- function(rating_data, max_byear, min_rating, min_players = 30,
     filter(fed %in% federations(., min_players))
 }
 
-diff_table <- function(rating_data, fun = mean, max_byear = 2019,
-                       min_rating = 1000, min_players = 30,
-                       include_inactive = FALSE, birth_uncertain = FALSE) {
+diff_table <- function(rating_data, fun = mean) {
   rating_data %>%
-    restrict_data(max_byear, min_rating, min_players,
-                  include_inactive, birth_uncertain) %>%
     group_by(fed, sex) %>%
     summarise(rating = fun(rating), games = fun(games), age = fun(born)) %>%
     ungroup() %>%
@@ -39,21 +35,15 @@ diff_table <- function(rating_data, fun = mean, max_byear = 2019,
     transmute(fed, y = rating_F - rating_M, E = games_F - games_M, A = age_F - age_M)
 }
 
-wreg <- function(rating_data, null_data, fun = mean, max_byear = 2019,
-                 min_rating = 1000, min_players = 30,
-                 include_inactive = FALSE, birth_uncertain = FALSE) {
-  diff_table(rating_data, fun, max_byear, min_rating, min_players,
-             include_inactive, birth_uncertain) %>%
+wreg <- function(rating_data, null_data, fun = mean) {
+  diff_table(rating_data, fun) %>%
     left_join(null_data, by = "fed") %>%
     transmute(fed, ym = y - mean, E, A, weights = 1 / sd^2) %>%
     lm(ym ~ E + A, data = ., weights = weights)
 }
 
-adjusted_data <- function(rating_data, null_data, fun = mean, max_byear = 2019,
-                          min_rating = 1000, min_players = 30,
-                          include_inactive = FALSE, birth_uncertain = FALSE) {
-  difftab <- diff_table(rating_data, fun, max_byear, min_rating, min_players,
-                        include_inactive, birth_uncertain) %>%
+adjusted_data <- function(rating_data, null_data, fun = mean) {
+  difftab <- diff_table(rating_data, fun) %>%
     left_join(null_data, by = "fed") %>%
     transmute(fed, ym = y - mean, E, A, weights = 1 / sd^2)
   fit <- lm(ym ~ E + A, data = difftab, weights = weights)
@@ -62,20 +52,34 @@ adjusted_data <- function(rating_data, null_data, fun = mean, max_byear = 2019,
   difftab %>% transmute(fed, yPEA = ym - wE*E - wA*A)
 }
 
+restrict_null <- function(null_tab, metric_mean, metric_sd, include_junior = TRUE,
+                          include_inactive = FALSE, min_rating = 1000) {
+  null_tab %>%
+    filter(include_junior == {{include_junior}},
+           include_inactive == {{include_inactive}},
+           rating_floor == min_rating,
+           metric %in% c(metric_mean, metric_sd)) %>%
+    select(fed, metric, value) %>%
+    pivot_wider(names_from = metric, values_from = value) %>%
+    rename(mean = all_of(metric_mean), sd = all_of(metric_sd))
+}
+
+
 rating_data <- read_rds("../data/rating_data.rds")
 
-null_data <- read_csv("../data/nulls/nulls-J1-I0.csv", show_col_types = FALSE) %>%
-  rename_with(tolower) %>%
-  select(fed, mean_ptmean, mean_ptsd) %>%
-  rename(mean = mean_ptmean, sd = mean_ptsd)
+null_data <- read_rds("../data/nulls/nulls.rds")
 
-
-participation_gap(rating_data) %>%
-  select(fed, participation_gap) %>%
-  inner_join(
-    adjusted_data(rating_data, null_data, max_byear = 2019, min_rating = 1000),
-    by = "fed"
-  ) %>%
-  ggplot(aes(x = participation_gap, y = yPEA, label = fed)) +
-  geom_text(fontface = "bold", colour = "firebrick", alpha = 0.6) +
-  theme_bw()
+rating_data %>%
+  restrict_data(max_byear = 1999, min_rating = 1400, min_players = 30,
+                include_inactive = FALSE, birth_uncertain = FALSE) %>%
+  adjusted_data(restrict_null(null_data, "mean_ptmean", "mean_ptsd",
+                              include_junior = FALSE, include_inactive = FALSE,
+                              min_rating = 1400),
+                fun = mean) %>%
+  arrange(yPEA) %>%
+  mutate(fed = as_factor(fed)) %>%
+  ggplot(aes(x = yPEA, y = fed)) +
+  geom_col(colour = "steelblue", fill = "steelblue", alpha = 0.2) +
+  labs(x = "Adjusted rating gap", y = "Federation") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
