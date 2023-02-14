@@ -2,6 +2,14 @@ library(tidyverse)
 library(ggfortify)
 
 
+diagplot <- function(modelFit, which = 3:2, smooth.colour = NA,
+                     alpha = 0.8, colour = "steelblue") {
+  autoplot(modelFit, which = which, smooth.colour = NA,
+           alpha = alpha, colour = colour) +
+    theme_bw() +
+    theme(panel.grid = element_blank())
+}
+
 participation_gap <- function(rating_data) {
   rating_data %>%
     count(fed, sex, name = "no_of_players") %>%
@@ -29,10 +37,10 @@ restrict_data <- function(rating_data, max_byear, min_rating, min_players = 30,
 diff_table <- function(rating_data, fun = mean) {
   rating_data %>%
     group_by(fed, sex) %>%
-    summarise(rating = fun(rating), games = fun(games), age = fun(born)) %>%
-    ungroup() %>%
+    summarise(rating = fun(rating), games = fun(games), age = fun(born),
+              .groups = "drop") %>%
     pivot_wider(names_from = sex, values_from = c(rating, games, age)) %>%
-    transmute(fed, y = rating_F - rating_M, E = games_F - games_M, A = age_F - age_M)
+    transmute(fed, y = rating_M - rating_F, E = games_M - games_F, A = age_M - age_F)
 }
 
 wreg <- function(rating_data, null_data, fun = mean) {
@@ -70,16 +78,38 @@ rating_data <- read_rds("../data/rating_data.rds")
 null_data <- read_rds("../data/nulls/nulls.rds")
 
 rating_data %>%
-  restrict_data(max_byear = 1999, min_rating = 1400, min_players = 30,
+  restrict_data(max_byear = 2019, min_rating = 1000, min_players = 30,
                 include_inactive = FALSE, birth_uncertain = FALSE) %>%
   adjusted_data(restrict_null(null_data, "mean_ptmean", "mean_ptsd",
-                              include_junior = FALSE, include_inactive = FALSE,
-                              min_rating = 1400),
-                fun = mean) %>%
+                              include_junior = TRUE, include_inactive = FALSE,
+                              min_rating = 1000),
+                fun = function(x) mean(tail(sort(x), 10))) %>%
   arrange(yPEA) %>%
-  mutate(fed = as_factor(fed)) %>%
+  mutate(fed = fct_rev(as_factor(fed))) %>%
   ggplot(aes(x = yPEA, y = fed)) +
   geom_col(colour = "steelblue", fill = "steelblue", alpha = 0.2) +
   labs(x = "Adjusted rating gap", y = "Federation") +
   theme_bw() +
   theme(panel.grid = element_blank())
+
+tibble(fun = list(mean = mean,
+                  top10 = function(x) mean(tail(sort(x), 10)),
+                  top1 = max)) %>%
+  mutate(metric = names(fun)) %>%
+  mutate(fit = map(fun, ~restrict_data(rating_data,
+                                       max_byear = 2019,
+                                       min_rating = 1000,
+                                       min_players = 30,
+                                       include_inactive = FALSE,
+                                       birth_uncertain = FALSE) %>%
+                     wreg(restrict_null(null_data,
+                                        "max10_ptmean",
+                                        "max10_ptsd",
+                                        include_junior = TRUE,
+                                        include_inactive = FALSE,
+                                        min_rating = 1000),
+                          fun = .x))) %>%
+  mutate(summary = map(fit, compose(broom::tidy, summary))) %>%
+  mutate(quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
+  #pull(fit) %>% map(diagplot)
+  unnest(c(summary, quality)) %>% select(-c(fun, fit, statistic))
