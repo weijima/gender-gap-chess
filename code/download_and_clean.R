@@ -4,7 +4,7 @@ library(tidyverse) # Packages for efficient data manipulation and plotting
 # Fix a particular problem in the raw data files, where the text "SIAGM" pushes the
 # ratings too far to the right, violating the fixed-width structure of the data. The
 # input "datafile" is a string with the path and name of the .txt data file. This
-# function modifies this file in place (so its use requires care).
+# function modifies this file in-place (so its use requires care).
 fix_parsing <- function(datafile) {
   # Replace every occurrence of "SIAGM" with just "SIM", which fixes line width issue:
   system(str_c("sed -i 's/SIAGM/SIM/g' ", datafile)) # Use "sed" (Unix) to edit file
@@ -94,17 +94,19 @@ sum_games <- function(rating_data) {
     group_by(id) %>%
     mutate(games = sum(games)) %>%
     ungroup() %>%
-    filter(month == max(month), year == max(year)) %>%
+    filter(year == max(year)) %>% # Filter for latest year in data
+    filter(month == max(month)) %>% # Within that year, filter for latest month
     select(-month, -year)
 }
 
 
 
 # Download, merge, clean, and save data, then clean up downloaded files:
-tibble(exdir = normalizePath("../data/tmp/"), # ASSUMES WORKING DIRECTORY IS /code
-       month_year = list( # All month-year combinations, from 2012 Sep to 2019 Dec:
+tibble(exdir = fs::path_abs("../data/tmp/"), # ASSUMES WORKING DIRECTORY IS: /code
+       month_year = list( # All month-year combinations, from 2012 Oct to 2020 Jan:
          crossing(month = tolower(month.abb), year = 12:19) %>%
-           filter(year > 12 | month %in% c("oct", "nov", "dec"))
+           filter(year > 12 | month %in% c("oct", "nov", "dec")) %>%
+           add_row(month = "jan", year = 20) # Add 2020 Jan manually to the end
        )) %>%
   # Download data:
   mutate(walk(exdir, ~system(str_c("mkdir -p ", .x)))) %>% # Create temporary folder
@@ -119,14 +121,14 @@ tibble(exdir = normalizePath("../data/tmp/"), # ASSUMES WORKING DIRECTORY IS /co
   mutate(walk2(data, exdir,
                ~write_rds(.x, str_c(.y, "/raw_data.rds"), compress = "xz"))) %>%
   # Remove all downloaded & temporary files:
-  mutate(walk(exdir, ~file.remove(Sys.glob(str_c(.x, "/stand*"))))) %>% # Txt & rds files
-  mutate(walk(exdir, ~file.remove(Sys.glob(str_c(.x, "/*.zip"))))) # Zip files
+  mutate(walk(exdir, ~file.remove(Sys.glob(str_c(.x, "/stand*"))))) %>% # txt & rds files
+  mutate(walk(exdir, ~file.remove(Sys.glob(str_c(.x, "/*.zip"))))) # zip files
 
 # Move file from /data/tmp to /data:
 system(str_c("mv ../data/tmp/raw_data.rds ../data/raw_data.rds"))
 system(str_c("rmdir ../data/tmp")) # Remove temporary directory
 
-# Add column with number of games played from 2012 Sep to 2019 Dec:
+# Add column with number of games played from 2012 Oct to 2020 Jan:
 read_rds("../data/raw_data.rds") %>% # Load large data file created above
   sum_games() %>%
   write_rds("../data/rating_data.rds", compress = "xz")

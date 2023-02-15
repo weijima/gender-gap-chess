@@ -97,7 +97,7 @@ experienceByFed <- function(rating_data, model, max_byear = 1999, min_rating = 1
 
 
 # rating_data <- read_rds("../data/fideratings.rds") %>%
-#   rename(id = fideid, fed = country, games = numgames, born = dob_yr, sex = sex_mode) %>%
+#   rename(id=fideid, fed=country, games=numgames, born=dob_yr, sex=sex_mode) %>%
 #   mutate(id = as.character(id)) %>%
 #   mutate(active = str_detect(flag, "i")) %>%
 #   mutate(year = as.integer(lubridate::year(listdate))) %>%
@@ -108,7 +108,6 @@ experienceByFed <- function(rating_data, model, max_byear = 1999, min_rating = 1
 rating_data <- read_rds("../data/rating_data.rds")
 
 analysis <- rating_data %>%
-  # filter(year == 2009, month == 1) %>%
   restrict_data() %>%
   analyze_ratings(function(x) mean(x), perms = 5000, test = function(x, y, fn, perms)
     wilcox.test(x, y, alternative = "greater")$p.value)

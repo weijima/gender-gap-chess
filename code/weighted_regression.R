@@ -77,20 +77,20 @@ rating_data <- read_rds("../data/rating_data.rds")
 
 null_data <- read_rds("../data/nulls/nulls.rds")
 
-rating_data %>%
-  restrict_data(max_byear = 2019, min_rating = 1000, min_players = 30,
-                include_inactive = FALSE, birth_uncertain = FALSE) %>%
-  adjusted_data(restrict_null(null_data, "mean_ptmean", "mean_ptsd",
-                              include_junior = TRUE, include_inactive = FALSE,
-                              min_rating = 1000),
-                fun = function(x) mean(tail(sort(x), 10))) %>%
-  arrange(yPEA) %>%
-  mutate(fed = fct_rev(as_factor(fed))) %>%
-  ggplot(aes(x = yPEA, y = fed)) +
-  geom_col(colour = "steelblue", fill = "steelblue", alpha = 0.2) +
-  labs(x = "Adjusted rating gap", y = "Federation") +
-  theme_bw() +
-  theme(panel.grid = element_blank())
+# rating_data %>%
+#   restrict_data(max_byear = 2019, min_rating = 1000, min_players = 30,
+#                 include_inactive = FALSE, birth_uncertain = FALSE) %>%
+#   adjusted_data(restrict_null(null_data, "mean_ptmean", "mean_ptsd",
+#                               include_junior = TRUE, include_inactive = FALSE,
+#                               min_rating = 1000),
+#                 fun = function(x) mean(tail(sort(x), 10))) %>%
+#   arrange(yPEA) %>%
+#   mutate(fed = fct_rev(as_factor(fed))) %>%
+#   ggplot(aes(x = yPEA, y = fed)) +
+#   geom_col(colour = "steelblue", fill = "steelblue", alpha = 0.2) +
+#   labs(x = "Adjusted rating gap", y = "Federation") +
+#   theme_bw() +
+#   theme(panel.grid = element_blank())
 
 tibble(fun = list(mean = mean,
                   top10 = function(x) mean(tail(sort(x), 10)),
