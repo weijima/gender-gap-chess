@@ -7,7 +7,7 @@ library(tidyverse) # Packages for efficient data manipulation and plotting
 # function modifies this file in-place (so its use requires care).
 fix_parsing <- function(datafile) {
   # Replace every occurrence of "SIAGM" with just "SIM", which fixes line width issue:
-  system(str_c("sed -i 's/SIAGM/SIM/g' ", datafile)) # Use "sed" (Unix) to edit file
+  system(str_c("gsed -i 's/SIAGM/SIM/g' ", datafile)) # Use "sed" (Unix) to edit file
 }
 
 
@@ -130,5 +130,6 @@ system(str_c("rmdir ../data/tmp")) # Remove temporary directory
 
 # Add column with number of games played from 2012 Oct to 2020 Jan:
 read_rds("../data/raw_data.rds") %>% # Load large data file created above
+  filter(year != 2020) %>% # Comment out to include 2020 January from the data as well
   sum_games() %>%
   write_rds("../data/rating_data.rds", compress = "xz")

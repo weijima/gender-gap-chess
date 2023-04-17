@@ -157,13 +157,13 @@ tibble(fun = list(mean = mean,
                                        min_players = 30,
                                        include_inactive = FALSE,
                                        birth_uncertain = FALSE) %>%
-                     wreg_age(restrict_null(null_data,
-                                            null_fun(.x)[1],
-                                            null_fun(.x)[2],
-                                            include_junior = TRUE,
-                                            include_inactive = FALSE,
-                                            min_rating = 1000),
-                              fun = .x))) %>%
+                     wreg(restrict_null(null_data,
+                                        null_fun(.x)[1],
+                                        null_fun(.x)[2],
+                                        include_junior = TRUE,
+                                        include_inactive = FALSE,
+                                        min_rating = 1000),
+                          fun = .x))) %>%
   mutate(summary = map(fit, compose(broom::tidy, summary))) %>%
   mutate(quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
   #pull(fit) %>% map(diagplot)
