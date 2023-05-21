@@ -34,32 +34,35 @@ restrict_data <- function(rating_data, max_byear, min_rating, min_players = 30,
     filter(fed %in% federations(., min_players))
 }
 
-diff_table <- function(rating_data, fun = mean) {
+diff_table <- function(rating_data, .f = mean) {
   rating_data %>%
     mutate(age = 2019 - born) %>%
     group_by(fed, sex) %>%
-    summarise(rating = fun(rating), games = fun(games), age = fun(age),
+    { if (identical(.f, top10)) filter(., rating %in% tail(sort(rating), 10)) else
+      if (identical(.f, top1)) filter(., rating %in% max(rating)) else .
+    } %>%
+    summarise(rating = mean(rating), games = mean(games), age = mean(age),
               .groups = "drop") %>%
     pivot_wider(names_from = sex, values_from = c(rating, games, age)) %>%
     transmute(fed, y = rating_M - rating_F, E = games_M - games_F, A = age_M - age_F)
 }
 
-wreg <- function(rating_data, null_data, fun = mean) {
-  diff_table(rating_data, fun) %>%
+wreg <- function(rating_data, null_data, .f = mean) {
+  diff_table(rating_data, .f) %>%
     inner_join(null_data, by = "fed") %>%
     transmute(fed, yP = y - mean, E, A, weights = 1 / sd^2) %>%
     lm(yP ~ E + A, data = ., weights = weights)
 }
 
-wreg_age <- function(rating_data, null_data, fun = mean) {
-  diff_table(rating_data, fun) %>%
+wreg_age <- function(rating_data, null_data, .f = mean) {
+  diff_table(rating_data, .f) %>%
     inner_join(null_data, by = "fed") %>%
     transmute(fed, yP = y - mean, A, weights = 1 / sd^2) %>%
     lm(yP ~ A, data = ., weights = weights)
 }
 
-adjusted_data <- function(rating_data, null_data, fun = mean) {
-  difftab <- diff_table(rating_data, fun) %>%
+adjusted_data <- function(rating_data, null_data, .f = mean) {
+  difftab <- diff_table(rating_data, .f) %>%
     inner_join(null_data, by = "fed") %>%
     transmute(fed, yP = y - mean, E, A, weights = 1 / sd^2)
   fit <- lm(yP ~ E + A, data = difftab, weights = weights)
@@ -68,8 +71,8 @@ adjusted_data <- function(rating_data, null_data, fun = mean) {
   difftab %>% mutate(fed, yPEA = yP - wE*E - wA*A)
 }
 
-adjusted_data_age <- function(rating_data, null_data, fun = mean) {
-  difftab <- diff_table(rating_data, fun) %>%
+adjusted_data_age <- function(rating_data, null_data, .f = mean) {
+  difftab <- diff_table(rating_data, .f) %>%
     inner_join(null_data, by = "fed") %>%
     transmute(fed, yP = y - mean, A, weights = 1 / sd^2)
   fit <- lm(yP ~ A, data = difftab, weights = weights)
@@ -93,10 +96,10 @@ top10 <- function(x) mean(tail(sort(x), 10))
 
 top1 <- max
 
-null_fun <- function(fun = mean) {
-  if (identical(fun, mean)) c("mean_ptmean", "mean_ptsd") else
-    if (identical(fun, top10)) c("max10_ptmean", "max10_ptsd") else
-      if (identical(fun, top1)) c("max1_ptmean", "max1_ptsd")
+null_fun <- function(.f = mean) {
+  if (identical(.f, mean)) c("mean_ptmean", "mean_ptsd") else
+    if (identical(.f, top10)) c("max10_ptmean", "max10_ptsd") else
+      if (identical(.f, top1)) c("max1_ptmean", "max1_ptsd")
 }
 
 
@@ -119,7 +122,7 @@ tibble(fun = list(mean = mean,
                                                      include_junior = TRUE,
                                                      include_inactive = FALSE,
                                                      min_rating = 1000),
-                                       fun = mean))) %>%
+                                       .f = .x))) %>%
   mutate(reg = map(fun, ~restrict_data(rating_data,
                                        max_byear = 2019,
                                        min_rating = 1000,
@@ -132,18 +135,19 @@ tibble(fun = list(mean = mean,
                                             include_junior = TRUE,
                                             include_inactive = FALSE,
                                             min_rating = 1000),
-                              fun = .x)),
+                              .f = .x)),
          reg = map(reg, compose(broom::tidy, summary)),
          reg = map(reg, ~select(.x, term, estimate) %>%
                      pivot_wider(names_from = term, values_from = estimate) %>%
                      rename(I = `(Intercept)`))) %>%
-  mutate(plot = map2(tab, reg, ~ggplot(data = .x, aes(x = A, y = yPA)) +
+  mutate(plot = map2(tab, reg, ~ggplot(data = .x, aes(x = A, y = yP)) +
                        geom_point(colour = "steelblue") +
                        #geom_smooth(colour = "black", se = FALSE, method = lm) +
                        geom_abline(data = .y, aes(intercept = I, slope = A)) +
                        geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
                        theme_bw() +
                        theme(panel.grid = element_blank()))) %>%
+  #unnest(reg)
   pull(plot) %>%
   cowplot::plot_grid(plotlist = ., nrow = 1)
 
@@ -163,7 +167,7 @@ tibble(fun = list(mean = mean,
                                         include_junior = TRUE,
                                         include_inactive = FALSE,
                                         min_rating = 1000),
-                          fun = .x))) %>%
+                          .f = .x))) %>%
   mutate(summary = map(fit, compose(broom::tidy, summary))) %>%
   mutate(quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
   #pull(fit) %>% map(diagplot)
