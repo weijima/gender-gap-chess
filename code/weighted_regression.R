@@ -80,11 +80,11 @@ adjusted_data_age <- function(rating_data, null_data, .f = mean) {
   difftab %>% mutate(fed, yPA = yP - wA*A)
 }
 
-restrict_null <- function(null_tab, metric_mean, metric_sd, include_junior = TRUE,
-                          include_inactive = FALSE, min_rating = 1000) {
+restrict_null <- function(null_tab, metric_mean, metric_sd, juniors = TRUE,
+                          inactives = FALSE, min_rating = 1000) {
   null_tab %>%
-    filter(include_junior == {{include_junior}},
-           include_inactive == {{include_inactive}},
+    filter(include_junior == juniors,
+           include_inactive == inactives,
            rating_floor == min_rating,
            metric %in% c(metric_mean, metric_sd)) %>%
     select(fed, metric, value) %>%
@@ -103,9 +103,41 @@ null_fun <- function(.f = mean) {
 }
 
 
+analyze_age_experience <- function(rating_data, null_data, min_rating = 1000,
+                                   min_players = 30, include_junior = TRUE,
+                                   include_inactive = FALSE, birth_uncertain = FALSE) {
+  if (include_junior) max_byear <- 2019 else max_byear <- 1999
+  tibble(fun = list(mean = mean, top10 = top10, top1 = top1)) %>%
+    mutate(metric = names(fun)) %>%
+    mutate(fit = map(fun, ~restrict_data(rating_data,
+                                         max_byear = max_byear,
+                                         min_rating = min_rating,
+                                         min_players = min_players,
+                                         include_inactive = include_inactive,
+                                         birth_uncertain = birth_uncertain) %>%
+                       wreg(restrict_null(null_data,
+                                          null_fun(.x)[1],
+                                          null_fun(.x)[2],
+                                          juniors = include_junior,
+                                          inactives = include_inactive,
+                                          min_rating = min_rating),
+                            .f = .x))) %>%
+    mutate(summary = map(fit, compose(broom::tidy, summary))) %>%
+    mutate(quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
+    #pull(fit) %>% map(diagplot)
+    unnest(c(summary, quality)) %>%
+    select(metric, term, estimate, std.error, p.value, r.squared)
+}
+
+
 rating_data <- read_rds("../data/rating_data.rds")
 
 null_data <- read_rds("../data/nulls/nulls.rds")
+
+analyze_age_experience(rating_data, null_data, min_rating = 1000, min_players = 30,
+                       include_junior = TRUE, include_inactive = FALSE,
+                       birth_uncertain = FALSE)
+
 
 tibble(fun = list(mean = mean,
                   top10 = top10,
@@ -120,8 +152,8 @@ tibble(fun = list(mean = mean,
                      adjusted_data_age(restrict_null(null_data,
                                                      null_fun(.x)[1],
                                                      null_fun(.x)[2],
-                                                     include_junior = TRUE,
-                                                     include_inactive = FALSE,
+                                                     juniors = TRUE,
+                                                     inactives = FALSE,
                                                      min_rating = 1000),
                                        .f = .x))) %>%
   mutate(fit = map(fun, ~restrict_data(rating_data,
@@ -133,8 +165,8 @@ tibble(fun = list(mean = mean,
                      wreg_age(restrict_null(null_data,
                                             null_fun(.x)[1],
                                             null_fun(.x)[2],
-                                            include_junior = TRUE,
-                                            include_inactive = FALSE,
+                                            juniors = TRUE,
+                                            inactives = FALSE,
                                             min_rating = 1000),
                               .f = .x)),
          summary = map(fit, compose(broom::tidy, summary)),
@@ -151,7 +183,6 @@ tibble(fun = list(mean = mean,
                        geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
                        theme_bw() +
                        theme(panel.grid = element_blank()))) %>%
-  #unnest(reg)
   pull(plot) %>%
   cowplot::plot_grid(plotlist = ., nrow = 1)
 
@@ -160,21 +191,19 @@ tibble(fun = list(mean = mean,
                   top10 = top10,
                   top1 = top1)) %>%
   mutate(metric = names(fun)) %>%
-  mutate(fit = map(fun, ~restrict_data(rating_data,
+  mutate(tab = map(fun, ~restrict_data(rating_data,
                                        max_byear = 2019,
                                        min_rating = 1000,
                                        min_players = 30,
                                        include_inactive = FALSE,
                                        birth_uncertain = FALSE) %>%
-                     wreg(restrict_null(null_data,
-                                        null_fun(.x)[1],
-                                        null_fun(.x)[2],
-                                        include_junior = TRUE,
-                                        include_inactive = FALSE,
-                                        min_rating = 1000),
-                          .f = .x))) %>%
-  mutate(summary = map(fit, compose(broom::tidy, summary))) %>%
-  mutate(quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
-  #pull(fit) %>% map(diagplot)
-  unnest(c(summary, quality)) %>%
-  select(metric, term, estimate, std.error, p.value, r.squared)
+                     adjusted_data(restrict_null(null_data,
+                                                 null_fun(.x)[1],
+                                                 null_fun(.x)[2],
+                                                 juniors = TRUE,
+                                                 inactives = FALSE,
+                                                 min_rating = 1000),
+                                   .f = .x))) %>%
+  unnest(tab) %>%
+  select(metric, fed, yP, yPEA, E, A, weights) %>%
+  write_csv("../data/age_experience_tab.csv")
