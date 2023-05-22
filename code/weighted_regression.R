@@ -37,12 +37,12 @@ restrict_data <- function(rating_data, max_byear, min_rating, min_players = 30,
 diff_table <- function(rating_data, .f = mean) {
   rating_data %>%
     mutate(age = 2019 - born) %>%
+    arrange(fed, sex, desc(rating)) %>%
     group_by(fed, sex) %>%
-    { if (identical(.f, top10)) filter(., rating %in% tail(sort(rating), 10)) else
-      if (identical(.f, top1)) filter(., rating %in% max(rating)) else .
-    } %>%
-    summarise(rating = mean(rating), games = mean(games), age = mean(age),
-              .groups = "drop") %>%
+    slice_head(n = { if (identical(.f, top10)) 10 else
+      if (identical(.f, top1)) 1 else nrow(.) }) %>%
+    summarise(rating=mean(rating), games=mean(games), age=mean(age), .groups="drop") %>%
+    ungroup() %>%
     pivot_wider(names_from = sex, values_from = c(rating, games, age)) %>%
     transmute(fed, y = rating_M - rating_F, E = games_M - games_F, A = age_M - age_F)
 }
@@ -110,6 +110,7 @@ null_data <- read_rds("../data/nulls/nulls.rds")
 tibble(fun = list(mean = mean,
                   top10 = top10,
                   top1 = top1)) %>%
+  mutate(metric = names(fun)) %>%
   mutate(tab = map(fun, ~rating_data %>%
                      restrict_data(max_byear = 2019,
                                    min_rating = 1000,
@@ -123,7 +124,7 @@ tibble(fun = list(mean = mean,
                                                      include_inactive = FALSE,
                                                      min_rating = 1000),
                                        .f = .x))) %>%
-  mutate(reg = map(fun, ~restrict_data(rating_data,
+  mutate(fit = map(fun, ~restrict_data(rating_data,
                                        max_byear = 2019,
                                        min_rating = 1000,
                                        min_players = 30,
@@ -136,20 +137,24 @@ tibble(fun = list(mean = mean,
                                             include_inactive = FALSE,
                                             min_rating = 1000),
                               .f = .x)),
-         reg = map(reg, compose(broom::tidy, summary)),
-         reg = map(reg, ~select(.x, term, estimate) %>%
-                     pivot_wider(names_from = term, values_from = estimate) %>%
-                     rename(I = `(Intercept)`))) %>%
-  mutate(plot = map2(tab, reg, ~ggplot(data = .x, aes(x = A, y = yP)) +
+         summary = map(fit, compose(broom::tidy, summary)),
+         quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
+  #unnest(c(summary, quality)) %>% select(-fun, -tab, -fit)
+  mutate(plot = map2(tab, summary, ~ggplot(data = .x, aes(x = A, y = yP)) +
                        geom_point(colour = "steelblue") +
                        #geom_smooth(colour = "black", se = FALSE, method = lm) +
-                       geom_abline(data = .y, aes(intercept = I, slope = A)) +
+                       geom_abline(data = .y %>%
+                                     select(term, estimate) %>%
+                                     pivot_wider(names_from = "term",
+                                                 values_from = "estimate"),
+                                   aes(intercept=`(Intercept)`, slope=A)) +
                        geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
                        theme_bw() +
                        theme(panel.grid = element_blank()))) %>%
   #unnest(reg)
   pull(plot) %>%
   cowplot::plot_grid(plotlist = ., nrow = 1)
+
 
 tibble(fun = list(mean = mean,
                   top10 = top10,
