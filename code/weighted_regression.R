@@ -139,71 +139,72 @@ analyze_age_experience(rating_data, null_data, min_rating = 1000, min_players = 
                        birth_uncertain = FALSE)
 
 
-tibble(fun = list(mean = mean,
-                  top10 = top10,
-                  top1 = top1)) %>%
-  mutate(metric = names(fun)) %>%
-  mutate(tab = map(fun, ~rating_data %>%
-                     restrict_data(max_byear = 2019,
-                                   min_rating = 1000,
-                                   min_players = 30,
-                                   include_inactive = FALSE,
-                                   birth_uncertain = FALSE) %>%
-                     adjusted_data_age(restrict_null(null_data,
-                                                     null_fun(.x)[1],
-                                                     null_fun(.x)[2],
-                                                     juniors = TRUE,
-                                                     inactives = FALSE,
-                                                     min_rating = 1000),
-                                       .f = .x))) %>%
-  mutate(fit = map(fun, ~restrict_data(rating_data,
-                                       max_byear = 2019,
-                                       min_rating = 1000,
-                                       min_players = 30,
-                                       include_inactive = FALSE,
-                                       birth_uncertain = FALSE) %>%
-                     wreg_age(restrict_null(null_data,
-                                            null_fun(.x)[1],
-                                            null_fun(.x)[2],
-                                            juniors = TRUE,
-                                            inactives = FALSE,
-                                            min_rating = 1000),
-                              .f = .x)),
-         summary = map(fit, compose(broom::tidy, summary)),
-         quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
-  #unnest(c(summary, quality)) %>% select(-fun, -tab, -fit)
-  mutate(plot = map2(tab, summary, ~ggplot(data = .x, aes(x = A, y = yP)) +
-                       geom_point(colour = "steelblue") +
-                       #geom_smooth(colour = "black", se = FALSE, method = lm) +
-                       geom_abline(data = .y %>%
-                                     select(term, estimate) %>%
-                                     pivot_wider(names_from = "term",
-                                                 values_from = "estimate"),
-                                   aes(intercept=`(Intercept)`, slope=A)) +
-                       geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
-                       theme_bw() +
-                       theme(panel.grid = element_blank()))) %>%
-  pull(plot) %>%
-  cowplot::plot_grid(plotlist = ., nrow = 1)
+# tibble(fun = list(mean = mean,
+#                   top10 = top10,
+#                   top1 = top1)) %>%
+#   mutate(metric = names(fun)) %>%
+#   mutate(tab = map(fun, ~rating_data %>%
+#                      restrict_data(max_byear = 2019,
+#                                    min_rating = 1000,
+#                                    min_players = 30,
+#                                    include_inactive = FALSE,
+#                                    birth_uncertain = FALSE) %>%
+#                      adjusted_data_age(restrict_null(null_data,
+#                                                      null_fun(.x)[1],
+#                                                      null_fun(.x)[2],
+#                                                      juniors = TRUE,
+#                                                      inactives = FALSE,
+#                                                      min_rating = 1000),
+#                                        .f = .x))) %>%
+#   mutate(fit = map(fun, ~restrict_data(rating_data,
+#                                        max_byear = 2019,
+#                                        min_rating = 1000,
+#                                        min_players = 30,
+#                                        include_inactive = FALSE,
+#                                        birth_uncertain = FALSE) %>%
+#                      wreg_age(restrict_null(null_data,
+#                                             null_fun(.x)[1],
+#                                             null_fun(.x)[2],
+#                                             juniors = TRUE,
+#                                             inactives = FALSE,
+#                                             min_rating = 1000),
+#                               .f = .x)),
+#          summary = map(fit, compose(broom::tidy, summary)),
+#          quality = map(fit, ~broom::glance(.x) %>% select("r.squared"))) %>%
+#   #unnest(c(summary, quality)) %>% select(-fun, -tab, -fit)
+#   mutate(plot = map2(tab, summary, ~ggplot(data = .x, aes(x = A, y = yP)) +
+#                        geom_point(colour = "steelblue") +
+#                        #geom_smooth(colour = "black", se = FALSE, method = lm) +
+#                        geom_abline(data = .y %>%
+#                                      select(term, estimate) %>%
+#                                      pivot_wider(names_from = "term",
+#                                                  values_from = "estimate"),
+#                                    aes(intercept=`(Intercept)`, slope=A)) +
+#                        geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
+#                        theme_bw() +
+#                        theme(panel.grid = element_blank()))) %>%
+#   pull(plot) %>%
+#   cowplot::plot_grid(plotlist = ., nrow = 1)
 
 
-tibble(fun = list(mean = mean,
-                  top10 = top10,
-                  top1 = top1)) %>%
+crossing(fun = list(mean = mean, top10 = top10, top1 = top1),
+         juniors = c(TRUE, FALSE),
+         rating_floor = c(1000, 1400, 1600)) %>%
   mutate(metric = names(fun)) %>%
-  mutate(tab = map(fun, ~restrict_data(rating_data,
-                                       max_byear = 2019,
-                                       min_rating = 1000,
-                                       min_players = 30,
-                                       include_inactive = FALSE,
-                                       birth_uncertain = FALSE) %>%
-                     adjusted_data(restrict_null(null_data,
-                                                 null_fun(.x)[1],
-                                                 null_fun(.x)[2],
-                                                 juniors = TRUE,
-                                                 inactives = FALSE,
-                                                 min_rating = 1000),
-                                   .f = .x))) %>%
+  mutate(tab = pmap(list(fun, juniors, rating_floor),
+                    ~rating_data %>%
+                      restrict_data(max_byear = ifelse(..2, 2019, 1999),
+                                    min_rating = ..3,
+                                    min_players = 30,
+                                    include_inactive = FALSE,
+                                    birth_uncertain = FALSE) %>%
+                      adjusted_data(restrict_null(null_data,
+                                                  null_fun(..1)[1],
+                                                  null_fun(..1)[2],
+                                                  juniors = ..2,
+                                                  inactives = FALSE,
+                                                  min_rating = ..3),
+                                    .f = ..1))) %>%
   unnest(tab) %>%
-  select(metric, fed, yP, yPEA, E, A, weights) %>%
+  select(metric, juniors, rating_floor, fed, yP, yPEA, E, A, weights) %>%
   write_csv("../data/age_experience_tab.csv")
