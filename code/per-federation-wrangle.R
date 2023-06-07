@@ -6,6 +6,5 @@ read_csv("../data/participation-reject.csv", show_col_types = FALSE) %>%
   mutate(Filter = str_c("J",1*include_junior,".I",1*include_inactive,".",min_rating)) %>%
   transmute(Filter, Federations, method, metric, s = `female-slanted`+`male-slanted`) %>%
   group_by(Filter, Federations, metric) %>%
-  summarise(sig = str_c(s[method == "none"], " (", s[method == "fdr"], ")")) %>%
-  ungroup() %>%
+  summarise(sig = str_c(s[method=="none"]," (",s[method=="fdr"],")"), .groups="drop") %>%
   pivot_wider(names_from = metric, values_from = sig)

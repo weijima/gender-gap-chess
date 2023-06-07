@@ -1,7 +1,7 @@
 library(tidyverse)
+library(Rcpp)
 
-
-top10 <- function(x) mean(tail(sort(x), 10))
+sourceCpp("permutation_tests.cpp")
 
 top1 <- max
 
@@ -27,39 +27,18 @@ compare <- function(rating_data, colname, test = permut_test) {
     transmute(fed, "{{colname}}" := map2_dbl(`F`, `M`, test))
 }
 
-permut_test <- function(x, y, fun = mean, perms = 1000, plot = FALSE) {
-  nx <- length(x)
-  ny <- length(y)
-  n <- nx + ny
-  pool <- c(x, y)
-  observed <- fun(x) - fun(y)
-  diffs <- rep(0, times = perms)
-  for (i in 1:perms) {
-    permut <- sample(pool)
-    diffs[i] <- fun(permut[1:nx]) - fun(permut[(nx + 1):n])
-  }
-  if (plot) {
-    hist(diffs, breaks = 30, xlim = c(min(diffs, observed), max(diffs, observed)))
-    abline(v = observed, col = "red")
-  }
-  mean(observed <= diffs)
-}
-
-gap_chart <- function(gap_data, signif = 0.05) {
-  gap_data %>%
-    mutate(rating_gap = case_when(
-      pvalue < signif ~ "female-slanted",
-      pvalue > 1 - signif ~ "male-slanted",
-      TRUE ~ "nonsignificant"
-    )) %>%
-    ggplot(aes(x = participation_gap, y = diff, label = fed, colour = rating_gap)) +
-    geom_text(fontface = "bold", alpha = 0.7) +
-    scale_x_continuous(name = "participation gap", labels = scales::percent) +
-    scale_y_continuous(name = "rating difference") +
-    scale_color_manual(values = c("blue4", "gray55", "firebrick"),
-                       name = "rating gap",
-                       limits = c("female-slanted", "nonsignificant", "male-slanted")) +
-    theme_bw()
+permut_test <- function(x, y, fun = mean, perms = 10000) {
+  if (identical(fun, mean)) {
+    permtest_mean(x, y, perms)
+  } else if (identical(fun, median)) {
+    permtest_median(x, y, perms)
+  } else if (identical(fun, sd)) {
+    permtest_sd(x, y, perms)
+  } else if (identical(fun, top1)) {
+    permtest_top1(x, y, perms)
+  } else if (identical(fun, top10)) {
+    permtest_top10(x, y, perms)
+  } else NA
 }
 
 analyze_ratings <- function(rating_data, fn = mean, perms = 1000, test = permut_test) {
@@ -90,7 +69,7 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
     s == 2 ~ "female-slanted",
     s == 1 ~ "male-slanted",
     s == 0 ~ "nonsignificant",
-    .default = "WEIRD ERROR - BOTH MALES AND FEMALES ARE SIGNIFICANT"
+    .default = "ERROR - BOTH MALES AND FEMALES ARE SIGNIFICANT"
   )
 }
 
@@ -116,29 +95,16 @@ significance_counter <- function(rating_data, include_junior = TRUE,
 
 rating_data <- read_rds("../data/rating_data.rds")
 
-tab <- crossing(include_junior = c(FALSE, TRUE),
-         include_inactive = c(FALSE, TRUE),
-         min_rating = c(1000),
-         fn = c(mean = mean, median = median, sd = sd, top1 = top1, top10 = top10)) %>%
-  mutate(metric = names(fn)) %>%
-  mutate(results = pmap(list(include_junior, include_inactive, min_rating, fn),
-                        significance_counter, rating_data=rating_data, perms=100)) %>%
-  unnest(results)
-
-write_csv(tab, "../data/participation-reject.csv")
-
-
-
-
-
-
 tictoc::tic()
 crossing(include_junior = c(FALSE, TRUE),
          include_inactive = c(FALSE, TRUE),
          min_rating = c(1000),
          fn = c(mean = mean, median = median, sd = sd, top1 = top1, top10 = top10)) %>%
   mutate(metric = names(fn)) %>%
-  slice(1) %>%
   mutate(results = pmap(list(include_junior, include_inactive, min_rating, fn),
-                        significance_counter, rating_data = rating_data, perms = 10000))
+                        significance_counter, rating_data = rating_data,
+                        perms = 100000)) %>%
+  unnest(results) %>%
+  select(-fn) %>%
+  write_csv("../data/participation-reject.csv")
 tictoc::toc()
