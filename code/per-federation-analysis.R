@@ -27,7 +27,7 @@ compare <- function(rating_data, colname, test = permut_test) {
     transmute(fed, "{{colname}}" := map2_dbl(`F`, `M`, test))
 }
 
-permut_test <- function(x, y, fun = mean, perms = 10000) {
+permut_test <- function(x, y, fun = mean, perms) {
   if (identical(fun, mean)) {
     permtest_mean(x, y, perms)
   } else if (identical(fun, median)) {
@@ -41,7 +41,7 @@ permut_test <- function(x, y, fun = mean, perms = 10000) {
   } else NA
 }
 
-analyze_ratings <- function(rating_data, fn = mean, perms = 1000, test = permut_test) {
+analyze_ratings <- function(rating_data, fn = mean, perms, test = permut_test) {
   rating_data %>%
     compare(pvalue, test = function(f, m) test(f, m, fn, perms)) %>%
     left_join(participation_gap(rating_data), by = "fed") %>%
@@ -62,8 +62,8 @@ restrict_data <- function(rating_data, include_junior = TRUE, min_rating = 1000,
 p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
   p_female <- p.adjust(pvalues, method = method)
   p_male <- p.adjust(1 - pvalues, method = method)
-  signif_female <- 2L * (p_female < signif)
-  signif_male <- 1L * (p_male < signif)
+  signif_female <- 2L * (p_female < signif / 2)
+  signif_male <- 1L * (p_male < signif / 2)
   s <- signif_female + signif_male
   case_when(
     s == 2 ~ "female-slanted",
@@ -75,7 +75,7 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
 
 significance_counter <- function(rating_data, include_junior = TRUE,
                                  include_inactive = FALSE, min_rating = 1000,
-                                 fn = mean, perms = 1000) {
+                                 fn = mean, perms) {
   anal <- rating_data %>%
     restrict_data(include_junior = include_junior, min_rating = min_rating,
                   include_inactive = include_inactive) %>%
@@ -95,7 +95,6 @@ significance_counter <- function(rating_data, include_junior = TRUE,
 
 rating_data <- read_rds("../data/rating_data.rds")
 
-tictoc::tic()
 crossing(include_junior = c(FALSE, TRUE),
          include_inactive = c(FALSE, TRUE),
          min_rating = c(1000),
@@ -103,8 +102,7 @@ crossing(include_junior = c(FALSE, TRUE),
   mutate(metric = names(fn)) %>%
   mutate(results = pmap(list(include_junior, include_inactive, min_rating, fn),
                         significance_counter, rating_data = rating_data,
-                        perms = 100000)) %>%
+                        perms = 1000)) %>%
   unnest(results) %>%
   select(-fn) %>%
   write_csv("../data/participation-reject.csv")
-tictoc::toc()

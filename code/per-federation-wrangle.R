@@ -1,6 +1,6 @@
 library(tidyverse)
 
-read_csv("../data/participation-reject.csv", show_col_types = FALSE) %>%
+read_csv("../data/participation-reject-1e5-perms.csv", show_col_types = FALSE) %>%
   mutate(Federations = sum(n), .by = c(contains("_"), method, metric)) %>%
   pivot_wider(names_from = signif, values_from = n, values_fill = 0) %>%
   mutate(Filter = str_c("J",1*include_junior,".I",1*include_inactive,".",min_rating)) %>%
