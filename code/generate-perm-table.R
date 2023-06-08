@@ -62,7 +62,7 @@ crossing(juniors = c(FALSE, TRUE),
          fn = c(mean = mean, median = median, sd = sd, top1 = top1, top10 = top10)) %>%
   mutate(metric = names(fn)) %>%
   mutate(results = pmap(list(juniors, inactives, floor, fn),
-                        perm_generator, rating_data = rating_data, perms = 100000,
+                        perm_generator, rating_data = rating_data, perms = 100,
                         .progress = TRUE)) %>%
   unnest(results) %>%
   write_rds("../data/perm-data-1e5-perms.rds", compress = "xz")
