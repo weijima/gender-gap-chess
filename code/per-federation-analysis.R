@@ -1,9 +1,5 @@
 library(tidyverse)
-library(Rcpp)
 
-sourceCpp("permutation_tests.cpp")
-
-top1 <- max
 
 participation_gap <- function(rating_data) {
   rating_data %>%
@@ -20,25 +16,27 @@ federations <- function(rating_data, min_players) {
     pull(fed)
 }
 
-compare <- function(rating_data, colname, test = permut_test) {
-  rating_data %>%
-    select(fed, sex, rating) %>%
-    pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
-    transmute(fed, "{{colname}}" := map2_dbl(`F`, `M`, test))
+permrow <- function(perms, fed, metric, juniors=TRUE, inactives=FALSE, floor=1000) {
+  filter(perms, fed == !!enquo(fed), metric == !!enquo(metric),
+         juniors == !!enquo(juniors), inactives == !!enquo(inactives),
+         floor == !!enquo(floor))
 }
 
-permut_test <- function(x, y, fun = mean, perms) {
-  if (identical(fun, mean)) {
-    permtest_mean(x, y, perms)
-  } else if (identical(fun, median)) {
-    permtest_median(x, y, perms)
-  } else if (identical(fun, sd)) {
-    permtest_sd(x, y, perms)
-  } else if (identical(fun, top1)) {
-    permtest_top1(x, y, perms)
-  } else if (identical(fun, top10)) {
-    permtest_top10(x, y, perms)
-  } else NA
+permdistr <- function(perms, fed, metric, juniors=TRUE, inactives=FALSE, floor=1000) {
+  permrow(perms, fed, metric, juniors, inactives, floor) %>%
+    pull(permuts) %>%
+    pluck(1)
+}
+
+compare <- function(perms, fed, metric, juniors=TRUE, inactives=FALSE, floor=1000) {
+  prow <- permrow(perms, !!enquo(fed), !!enquo(metric), !!enquo(juniors),
+                  !!enquo(inactives), !!enquo(floor))
+  f <- prow$fn[[1]]
+  w <- prow$`F`[[1]]
+  m <- prow$`M`[[1]]
+  diff <- f(w) - f(m)
+  permuts <- prow$permuts[[1]]
+  length(permuts[permuts < diff])
 }
 
 analyze_ratings <- function(rating_data, fn = mean, perms, test = permut_test) {
