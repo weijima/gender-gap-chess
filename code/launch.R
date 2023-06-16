@@ -12,7 +12,7 @@ for (r in 1:60) {
     paste("#SBATCH -n 1"),
     paste("# "),
     paste("# Run single task in foreground"),
-    paste("module add R/3.5.1-nsc1-gcc-2018a"),
+    paste("module add R/4.2.2-nsc1-gcc-11.3.0-bare"),
     paste("cd", Sys.getenv("PWD")),
     paste("Rscript code/generate-perm-table-cluster.R", r, perms),
     paste("# "),
