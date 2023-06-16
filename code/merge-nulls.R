@@ -2,7 +2,7 @@ library(tidyverse)
 
 
 # Table of file names with null results:
-tibble(file = Sys.glob("../data/nulls/nulls-*.csv")) %>%
+tibble(file = Sys.glob("data/nulls/nulls-*.csv")) %>%
   # Extract file names, without path and extension:
   mutate(name = fs::path_ext_remove(fs::path_file(file))) %>%
   # For consistency, tag "-R1000" to file names with no rating floor:
@@ -25,7 +25,7 @@ tibble(file = Sys.glob("../data/nulls/nulls-*.csv")) %>%
   pivot_longer(!include_junior & !include_inactive & !rating_floor & !fed,
                names_to = "metric") %>%
   # Save data:
-  write_rds("../data/nulls/nulls.rds", compress = "xz")
+  write_rds("data/nulls/nulls.rds", compress = "xz")
 
 # obs: observed value, e.g. diff. between top 1 mean ratings in the actual data
 # ptmean, ptsd, ptpval: mean, std dev, and p-value under the permutation tests

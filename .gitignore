@@ -9,3 +9,4 @@
 *.synctex.gz
 *.html
 /data/large_data
+.Rproj.user

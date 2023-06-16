@@ -102,7 +102,7 @@ sum_games <- function(rating_data) {
 
 
 # Download, merge, clean, and save data, then clean up downloaded files:
-tibble(exdir = fs::path_abs("../data/tmp/"), # ASSUMES WORKING DIRECTORY IS: /code
+tibble(exdir = fs::path_abs("data/tmp/"), # ASSUMES WORKING DIRECTORY IS: /code
        month_year = list( # All month-year combinations, from 2012 Oct to 2020 Jan:
          crossing(month = tolower(month.abb), year = 12:19) %>%
            filter(year > 12 | month %in% c("oct", "nov", "dec")) %>%
@@ -125,11 +125,11 @@ tibble(exdir = fs::path_abs("../data/tmp/"), # ASSUMES WORKING DIRECTORY IS: /co
   mutate(walk(exdir, ~file.remove(Sys.glob(str_c(.x, "/*.zip"))))) # zip files
 
 # Move file from /data/tmp to /data:
-system(str_c("mv ../data/tmp/raw_data.rds ../data/raw_data.rds"))
-system(str_c("rmdir ../data/tmp")) # Remove temporary directory
+system(str_c("mv data/tmp/raw_data.rds data/raw_data.rds"))
+system(str_c("rmdir data/tmp")) # Remove temporary directory
 
 # Add column with number of games played from 2012 Oct to 2020 Jan:
-read_rds("../data/raw_data.rds") %>% # Load large data file created above
+read_rds("data/raw_data.rds") %>% # Load large data file created above
   filter(year != 2020) %>% # Comment out to include 2020 January from the data as well
   sum_games() %>%
-  write_rds("../data/rating_data.rds", compress = "xz")
+  write_rds("data/rating_data.rds", compress = "xz")

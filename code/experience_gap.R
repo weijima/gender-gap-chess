@@ -1,6 +1,6 @@
 library(tidyverse)
 
-rating_data <- read_rds("../data/rating_data.rds")
+rating_data <- read_rds("data/rating_data.rds")
 
 rating_data %>%
   mutate(ratingBin = cut(rating, breaks = seq(1000, 2600, by = 50),
@@ -12,7 +12,7 @@ rating_data %>%
   mutate(diff = `F` - `M`) %>%
   ggplot() +
   aes(x = ratingBin, y = diff) +
-  geom_point(colour = "steelblue") +
+  geom_col(colour = "steelblue", fill = "steelblue", alpha = 0.2) +
   scale_x_discrete(name = "rating bin", breaks = c(1000, 1500, 2000, 2500)) +
   labs(y = "difference in mean experience") +
   theme_bw()

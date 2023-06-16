@@ -1,7 +1,7 @@
 library(tidyverse)
 library(Rcpp)
 
-sourceCpp("permutation_table.cpp")
+sourceCpp("code/permutation_table.cpp")
 
 top1 <- max
 
@@ -54,7 +54,7 @@ perm_generator <- function(rating_data, juniors = TRUE, inactives = FALSE, floor
 }
 
 
-rating_data <- read_rds("../data/rating_data.rds")
+rating_data <- read_rds("data/rating_data.rds")
 
 crossing(juniors = c(FALSE, TRUE),
          inactives = c(FALSE, TRUE),
@@ -64,4 +64,4 @@ crossing(juniors = c(FALSE, TRUE),
   mutate(results = pmap(list(juniors, inactives, floor, fn),
                         perm_generator, rating_data = rating_data, perms = 100000)) %>%
   unnest(results) %>%
-  write_rds("../data/perm-data-1e5-perms.rds", compress = "xz")
+  write_rds("data/perm-data-1e5-perms.rds", compress = "xz")

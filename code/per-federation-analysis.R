@@ -1,67 +1,21 @@
 library(tidyverse)
 
+top1 <- max
 
-participation_gap <- function(rating_data) {
-  rating_data %>%
-    count(fed, sex, name = "no_of_players") %>%
-    pivot_wider(names_from = "sex", values_from = "no_of_players") %>%
-    replace_na(list(`F` = 0, `M` = 0)) %>%
-    mutate(participation_gap = `M` / (`F` + `M`))
+top10 <- function(x) sort(x) %>% tail(10) %>% mean()
+
+obsDiff <- function(women, men, metric) match.fun(metric)(women) - match.fun(metric)(men)
+
+rawPval <- function(women, men, metric, permuts) {
+  obs <- obsDiff(women, men, metric)
+  length(permuts[obs < permuts]) / length(permuts)
 }
 
-federations <- function(rating_data, min_players) {
-  participation_gap(rating_data) %>%
-    mutate(no_minority = pmin(`F`, `M`)) %>%
-    filter(no_minority >= min_players) %>%
-    pull(fed)
-}
-
-permrow <- function(perms, fed, metric, juniors=TRUE, inactives=FALSE, floor=1000) {
-  filter(perms, fed == !!enquo(fed), metric == !!enquo(metric),
-         juniors == !!enquo(juniors), inactives == !!enquo(inactives),
-         floor == !!enquo(floor))
-}
-
-permdistr <- function(perms, fed, metric, juniors=TRUE, inactives=FALSE, floor=1000) {
-  permrow(perms, fed, metric, juniors, inactives, floor) %>%
-    pull(permuts) %>%
-    pluck(1)
-}
-
-compare <- function(perms, fed, metric, juniors=TRUE, inactives=FALSE, floor=1000) {
-  prow <- permrow(perms, !!enquo(fed), !!enquo(metric), !!enquo(juniors),
-                  !!enquo(inactives), !!enquo(floor))
-  f <- prow$fn[[1]]
-  w <- prow$`F`[[1]]
-  m <- prow$`M`[[1]]
-  diff <- f(w) - f(m)
-  permuts <- prow$permuts[[1]]
-  length(permuts[permuts < diff])
-}
-
-analyze_ratings <- function(rating_data, fn = mean, perms, test = permut_test) {
-  rating_data %>%
-    compare(pvalue, test = function(f, m) test(f, m, fn, perms)) %>%
-    left_join(participation_gap(rating_data), by = "fed") %>%
-    left_join(compare(rating_data, diff, function(f, m) fn(f) - fn(m)), by = "fed")
-}
-
-restrict_data <- function(rating_data, include_junior = TRUE, min_rating = 1000,
-                          min_players = 30, include_inactive = FALSE,
-                          birth_uncertain = FALSE) {
-  if (include_junior) max_byear <- 2019 else max_byear <- 1999
-  rating_data %>%
-    filter(if (include_inactive) TRUE else active) %>%
-    filter(if (birth_uncertain) TRUE else born != 0) %>%
-    filter(born <= max_byear, rating >= min_rating) %>%
-    filter(fed %in% federations(., min_players))
-}
-
-p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
+pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
   p_female <- p.adjust(pvalues, method = method)
   p_male <- p.adjust(1 - pvalues, method = method)
-  signif_female <- 2L * (p_female < signif / 2)
-  signif_male <- 1L * (p_male < signif / 2)
+  signif_female <- 2L * (p_female < signif)
+  signif_male <- 1L * (p_male < signif)
   s <- signif_female + signif_male
   case_when(
     s == 2 ~ "female-slanted",
@@ -71,36 +25,42 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
   )
 }
 
-significance_counter <- function(rating_data, include_junior = TRUE,
-                                 include_inactive = FALSE, min_rating = 1000,
-                                 fn = mean, perms) {
-  anal <- rating_data %>%
-    restrict_data(include_junior = include_junior, min_rating = min_rating,
-                  include_inactive = include_inactive) %>%
-    analyze_ratings(fn, perms = perms, test = permut_test)
-  sig_fdr <- anal %>%
-    mutate(signif = p_anal(pvalue, method = "fdr")) %>%
-    count(signif) %>%
-    mutate(method = "fdr")
-  sig_raw <- anal %>%
-    mutate(signif = p_anal(pvalue, method = "none")) %>%
-    count(signif) %>%
-    mutate(method = "none")
-  bind_rows(sig_fdr, sig_raw)
-}
 
+dat <- read_rds("data/large_data/perm-data-1e5-perms.rds")
 
+# Sample histogram of permutation nulls, along with the observed difference:
+dat %>%
+  filter(!juniors, !inactives, floor == 1000, fed == "IND", metric == "mean") %>%
+  transmute(permuts, obs = pmap_dbl(list(`F`, `M`, metric), obsDiff)) %>%
+  unnest(permuts) %>%
+  ggplot(aes(x = permuts)) +
+  geom_histogram(bins = 30, colour = "steelblue", fill = "steelblue", alpha = 0.2) +
+  geom_vline(aes(xintercept = first(obs)), colour = "firebrick") +
+  theme_bw()
 
-rating_data <- read_rds("../data/rating_data.rds")
+# Create table of raw p-values, along with corrected significance for each federation:
+pvalues <- dat %>%
+  mutate(p = pmap_dbl(list(`F`, `M`, metric, permuts), rawPval)) %>%
+  select(-c(`fn`, `F`, `M`, `permuts`)) %>%
+  mutate(fdr = pAnal(p), none = pAnal(p, method = "none"),
+         .by = c(juniors, inactives, floor, metric)) %>%
+  pivot_longer(cols = c(fdr, none), names_to = "method", values_to = "signif")
 
-crossing(include_junior = c(FALSE, TRUE),
-         include_inactive = c(FALSE, TRUE),
-         min_rating = c(1000),
-         fn = c(mean = mean, median = median, sd = sd, top1 = top1, top10 = top10)) %>%
-  mutate(metric = names(fn)) %>%
-  mutate(results = pmap(list(include_junior, include_inactive, min_rating, fn),
-                        significance_counter, rating_data = rating_data,
-                        perms = 1000)) %>%
-  unnest(results) %>%
-  select(-fn) %>%
-  write_csv("../data/participation-reject.csv")
+# Generate Table 2 from the manuscript:
+pvalues %>%
+  summarise(n = n(), .by = c(juniors, inactives, floor, metric, method, signif)) %>%
+  mutate(Federations = sum(n), .by = c(juniors, inactives, floor, method, metric)) %>%
+  pivot_wider(names_from = signif, values_from = n, values_fill = 0) %>%
+  mutate(Filter = str_c("J", 1 * juniors, ".I", 1 * inactives, ".", floor)) %>%
+  transmute(Filter, Federations, method, metric, s = `female-slanted`+`male-slanted`) %>%
+  group_by(Filter, Federations, metric) %>%
+  summarise(sig = str_c(s[method=="none"]," (",s[method=="fdr"],")"), .groups="drop") %>%
+  pivot_wider(names_from = metric, values_from = sig)
+
+# Sample part of the data:
+pvalues %>%
+  filter(!juniors, !inactives, floor == 1400, method == "fdr") %>%
+  summarise(n = n(), .by = c(juniors, inactives, floor, metric, method, signif)) %>%
+  mutate(n = n / sum(n), .by = c(juniors, inactives, floor, metric, method)) %>%
+  mutate(n = str_c(100 * n, "%")) %>%
+  pivot_wider(names_from = signif, values_from = n, values_fill = "0%")
