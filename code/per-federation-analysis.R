@@ -14,8 +14,8 @@ rawPval <- function(women, men, metric, permuts) {
 pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
   p_female <- p.adjust(pvalues, method = method)
   p_male <- p.adjust(1 - pvalues, method = method)
-  signif_female <- 2L * (p_female < signif)
-  signif_male <- 1L * (p_male < signif)
+  signif_female <- 2L * (p_female < signif / 2)
+  signif_male <- 1L * (p_male < signif / 2)
   s <- signif_female + signif_male
   case_when(
     s == 2 ~ "female-slanted",
@@ -62,5 +62,5 @@ pvalues %>%
   filter(!juniors, !inactives, floor == 1400, method == "fdr") %>%
   summarise(n = n(), .by = c(juniors, inactives, floor, metric, method, signif)) %>%
   mutate(n = n / sum(n), .by = c(juniors, inactives, floor, metric, method)) %>%
-  mutate(n = str_c(100 * n, "%")) %>%
+  mutate(n = str_c(round(100 * n, 2), "%")) %>%
   pivot_wider(names_from = signif, values_from = n, values_fill = "0%")
