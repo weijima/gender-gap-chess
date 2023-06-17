@@ -1,16 +1,5 @@
 library(tidyverse)
 
-top1 <- max
-
-top10 <- function(x) sort(x) %>% tail(10) %>% mean()
-
-obsDiff <- function(women, men, metric) match.fun(metric)(women) - match.fun(metric)(men)
-
-rawPval <- function(women, men, metric, permuts) {
-  obs <- obsDiff(women, men, metric)
-  length(permuts[obs < permuts]) / length(permuts)
-}
-
 pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
   p_female <- p.adjust(pvalues, method = method)
   p_male <- p.adjust(1 - pvalues, method = method)
@@ -26,23 +15,12 @@ pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
 }
 
 
-dat <- read_rds("data/large_data/perm-data-1e5-perms.rds")
-
-# Sample histogram of permutation nulls, along with the observed difference:
-dat %>%
-  filter(!juniors, !inactives, floor == 1000, fed == "IND", metric == "mean") %>%
-  transmute(permuts, obs = pmap_dbl(list(`F`, `M`, metric), obsDiff)) %>%
-  unnest(permuts) %>%
-  ggplot(aes(x = permuts)) +
-  geom_histogram(bins = 30, colour = "steelblue", fill = "steelblue", alpha = 0.2) +
-  geom_vline(aes(xintercept = first(obs)), colour = "firebrick") +
-  theme_bw()
-
-# Create table of raw p-values, along with corrected significance for each federation:
-pvalues <- dat %>%
-  mutate(p = pmap_dbl(list(`F`, `M`, metric, permuts), rawPval)) %>%
-  select(-c(`fn`, `F`, `M`, `permuts`)) %>%
-  mutate(fdr = pAnal(p), none = pAnal(p, method = "none"),
+# Table of raw p-values, along with the corrected significance for each federation:
+pvalues <- read_rds("data/nulls/nulls-gyuri.rds") %>%
+  filter(stat == "ptpval") %>%
+  select(-stat) %>%
+  mutate(fdr = pAnal(value),
+         none = pAnal(value, method = "none"),
          .by = c(juniors, inactives, floor, metric)) %>%
   pivot_longer(cols = c(fdr, none), names_to = "method", values_to = "signif")
 

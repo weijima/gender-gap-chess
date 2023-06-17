@@ -1,16 +1,5 @@
 library(tidyverse)
 
-top1 <- max
-
-top10 <- function(x) sort(x) %>% tail(10) %>% mean()
-
-obsDiff <- function(women, men, metric) match.fun(metric)(women) - match.fun(metric)(men)
-
-rawPval <- function(women, men, metric, permuts) {
-  obs <- obsDiff(women, men, metric)
-  length(permuts[obs < permuts]) / length(permuts)
-}
-
 
 # Load Richard's dataset:
 read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
@@ -47,28 +36,33 @@ read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
 
 
 # Richard's permutation results:
-permRichard <- read_rds("data/nulls/nulls.rds") %>%
+read_rds("data/nulls/nulls.rds") %>%
   rename(juniors=include_junior, inactives=include_inactive, floor=rating_floor) %>%
   mutate(metric = str_replace(metric, "max", "top")) %>%
   # There is a strange column "sd_ptmean.1", while "sd_ptsd" is very often NA. I assume
   # "sd_ptmean.1" was supposed to have been "sd_ptsd" (though not sure yet):
   filter(metric != "sd_ptsd") %>%
   mutate(metric = ifelse(metric == "sd_ptmean.1", "sd_ptsd", metric)) %>%
-  # Restrict to permutation means, standard deviations, and p-values:
-  filter(str_detect(metric, "_pt")) %>%
-  separate_wider_delim(metric, delim = "_", names = c("metric", "stat"))
-
-# My own permutation data:
-permGyuri <- read_rds("data/large_data/perm-data-1e5-perms.rds")
-
-permGyuri %>%
-  #mutate(myvalue = pmap_dbl(list(`F`, `M`, metric, permuts), rawPval)) %>%
-  mutate(myvalue = map_dbl(permuts, mean)) %>%
-  left_join(permRichard %>% filter(stat == "ptmean"),
-            by = join_by(juniors, inactives, floor, fed, metric)) %>%
-  mutate(diff = -myvalue - value) %>%
+  # Restrict to permutation means, std devs, p-values, and observed differences:
+  filter(str_detect(metric, "(_pt|obs)")) %>%
+  separate_wider_delim(metric, delim = "_", names = c("metric", "stat")) %>%
+  relocate(metric, .before = fed) %>%
+  # Get rid of the "ALL" federation (i.e., all federations together):
+  filter(fed != "ALL") %>%
+  # Merge the data with my permutation results:
+  left_join(read_rds("data/nulls/nulls-gyuri.rds") %>% rename(myvalue = value),
+            by = join_by(juniors, inactives, floor, metric, fed, stat)) %>%
+  # Adjust my values for different conventions (F - M to M - F):
+  mutate(myvalue = case_when(
+    stat %in% c("obs", "ptmean") ~ -myvalue,
+    stat == "ptpval" ~ 1 - myvalue,
+    .default = myvalue
+  )) %>%
+  # Differences between Richard's and my results:
+  mutate(diff = value - myvalue) %>%
+  # Create plot:
   ggplot(aes(x = value, y = diff)) +
   geom_point(colour = "steelblue", alpha = 0.25) +
-  labs(x = "Richard's values", y = "Difference between our values",
-       title = "Permutation means") +
+  labs(x = "Richard's values", y = "Difference between our values") +
+  facet_wrap(~stat, scales = "free") +
   theme_bw()
