@@ -37,8 +37,6 @@ read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
 
 # Richard's permutation results:
 read_rds("data/nulls/nulls.rds") %>%
-  rename(juniors=include_junior, inactives=include_inactive, floor=rating_floor) %>%
-  mutate(metric = str_replace(metric, "max", "top")) %>%
   # There is a strange column "sd_ptmean.1", while "sd_ptsd" is very often NA. I assume
   # "sd_ptmean.1" was supposed to have been "sd_ptsd" (though not sure yet):
   filter(metric != "sd_ptsd") %>%
@@ -46,7 +44,6 @@ read_rds("data/nulls/nulls.rds") %>%
   # Restrict to permutation means, std devs, p-values, and observed differences:
   filter(str_detect(metric, "(_pt|obs)")) %>%
   separate_wider_delim(metric, delim = "_", names = c("metric", "stat")) %>%
-  relocate(metric, .before = fed) %>%
   # Get rid of the "ALL" federation (i.e., all federations together):
   filter(fed != "ALL") %>%
   # Merge the data with my permutation results:

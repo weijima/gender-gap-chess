@@ -12,11 +12,10 @@ rawPval <- function(women, men, metric, permuts) {
 }
 
 
-permtab <- tibble(juniors = logical(), inactives = logical(), floor = integer(),
+permtab <- tibble(juniors = logical(), inactives = logical(), floor = numeric(),
                   metric = character(), fed = character(), stat = character(),
                   value = numeric())
-master <- read_csv("data/permdat/master.csv", col_types = "llicc")
-for (file in master$file) {
+for (file in Sys.glob("data/permdat/perm*.rds")) {
   cat(paste0(file, "..."))
   permtab <- read_rds(file) %>%
     mutate(obs = pmap_dbl(list(`F`, `M`, metric), obsDiff),
@@ -29,4 +28,6 @@ for (file in master$file) {
   cat(paste0("done\n"))
 }
 
-write_rds(permtab, "data/nulls/nulls-gyuri.rds", compress = "xz")
+permtab %>%
+  arrange(juniors, inactives, floor, metric, fed) %>%
+  write_rds("data/nulls/nulls-gyuri.rds", compress = "xz")
