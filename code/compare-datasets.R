@@ -35,7 +35,7 @@ read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
   nrow()
 
 
-# Richard's permutation results:
+# Compare Richard's permutation results with mine:
 read_rds("data/nulls/nulls.rds") %>%
   # There is a strange column "sd_ptmean.1", while "sd_ptsd" is very often NA. I assume
   # "sd_ptmean.1" was supposed to have been "sd_ptsd" (though not sure yet):
