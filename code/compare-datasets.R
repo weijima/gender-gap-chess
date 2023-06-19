@@ -23,7 +23,7 @@ read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
   filter(id != "9301879") %>%
   # Now read in my data and join with Richard's. The resulting table has just as many
   # rows as the two joined ones, indicating that they line up perfectly:
-  left_join(read_rds("data/rating_data.rds") %>%
+  left_join(read_csv("data/rating-data.csv", col_types = "cccdiil") %>%
               rename(ratingGB = rating) %>%
               select(-games),
             by = join_by(id, fed, sex, born, active)) %>%
@@ -36,18 +36,15 @@ read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
 
 
 # Compare Richard's permutation results with mine:
-read_rds("data/nulls/nulls.rds") %>%
-  # There is a strange column "sd_ptmean.1", while "sd_ptsd" is very often NA. I assume
-  # "sd_ptmean.1" was supposed to have been "sd_ptsd" (though not sure yet):
-  filter(metric != "sd_ptsd") %>%
-  mutate(metric = ifelse(metric == "sd_ptmean.1", "sd_ptsd", metric)) %>%
+read_csv("data/nulls-Richard/null-stats-Richard.csv", show_col_types = FALSE) %>%
   # Restrict to permutation means, std devs, p-values, and observed differences:
   filter(str_detect(metric, "(_pt|obs)")) %>%
   separate_wider_delim(metric, delim = "_", names = c("metric", "stat")) %>%
   # Get rid of the "ALL" federation (i.e., all federations together):
   filter(fed != "ALL") %>%
   # Merge the data with my permutation results:
-  left_join(read_rds("data/nulls/nulls-gyuri.rds") %>% rename(myvalue = value),
+  left_join(read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+              rename(myvalue = value), # Rename value column, to compare with Richard's
             by = join_by(juniors, inactives, floor, metric, fed, stat)) %>%
   # Adjust my values for different conventions (F - M to M - F):
   mutate(myvalue = case_when(

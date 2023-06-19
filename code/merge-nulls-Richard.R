@@ -2,7 +2,7 @@ library(tidyverse)
 
 
 # Table of file names with null results:
-tibble(file = Sys.glob("data/nulls/nulls-*.csv")) %>%
+tibble(file = Sys.glob("data/nulls-Richard/nulls-*.csv")) %>%
   # Extract file names, without path and extension:
   mutate(name = fs::path_ext_remove(fs::path_file(file))) %>%
   # For consistency, tag "-R1000" to file names with no rating floor:
@@ -17,6 +17,9 @@ tibble(file = Sys.glob("data/nulls/nulls-*.csv")) %>%
   mutate(data = map(file, read_csv, show_col_types = FALSE)) %>%
   # Standardize column names in sub-tables to be lowercase:
   mutate(data = map(data, ~rename_with(.x, tolower))) %>%
+  # In some files, "sd_ptsd" is accidentally named "sd_ptmean" - fixing this issue:
+  mutate(data = map(data, ~ { if ("sd_ptmean.1" %in% names(.x))
+    rename(.x, sd_ptsd = sd_ptmean.1) else .x })) %>%
   unnest(data) %>%
   # Remove the now-unnecessary "file" column:
   select(-file) %>%
@@ -25,4 +28,4 @@ tibble(file = Sys.glob("data/nulls/nulls-*.csv")) %>%
   # Have "top1" and "top10" as metrics, instead of "max1" and "max10":
   mutate(metric = str_replace(metric, "max", "top")) %>%
   # Save data:
-  write_rds("data/nulls/nulls.rds", compress = "xz")
+  write_csv("data/nulls-Richard/null-stats-Richard.csv")

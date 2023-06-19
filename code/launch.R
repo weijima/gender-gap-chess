@@ -1,4 +1,4 @@
-perms <- 1e2L
+perms <- 1e6L
 
 for (r in 1:60) {
   jobname <- sprintf("CP%02d.sh", r)
@@ -7,7 +7,7 @@ for (r in 1:60) {
     paste("#!/bin/bash"),
     paste("#SBATCH -J", jobname),
     paste("#SBATCH -A liu-2018-29"),
-    paste("#SBATCH -t 24:00:00"),
+    paste("#SBATCH -t 10:00:00"),
     paste("#SBATCH --mem=16000"),
     paste("#SBATCH -n 1"),
     paste("# "),

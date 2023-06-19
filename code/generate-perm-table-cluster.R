@@ -10,7 +10,7 @@ if (length(clargs) > 0) {
 library(tidyverse)
 library(Rcpp)
 
-sourceCpp("code/permutation_table.cpp")
+sourceCpp("code/permutation-table.cpp")
 
 top1 <- max
 
@@ -39,20 +39,6 @@ restrict_data <- function(rating_data, include_junior, include_inactive, min_rat
     filter(fed %in% federations(., min_players))
 }
 
-permut_tab <- function(x, y, fn, perms) {
-  if (identical(fn, mean)) {
-    permtab_mean(x, y, perms)
-  } else if (identical(fn, median)) {
-    permtab_median(x, y, perms)
-  } else if (identical(fn, sd)) {
-    permtab_sd(x, y, perms)
-  } else if (identical(fn, top1)) {
-    permtab_top1(x, y, perms)
-  } else if (identical(fn, top10)) {
-    permtab_top10(x, y, perms)
-  } else NA
-}
-
 perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
   rating_data %>%
     restrict_data(juniors, inactives, floor) %>%
@@ -62,7 +48,7 @@ perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
 }
 
 
-rating_data <- read_rds("data/rating_data.rds")
+rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
 crossing(juniors = c(FALSE, TRUE),
          inactives = c(FALSE, TRUE),

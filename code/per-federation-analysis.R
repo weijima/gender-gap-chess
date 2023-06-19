@@ -16,7 +16,7 @@ pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
 
 
 # Table of raw p-values, along with the corrected significance for each federation:
-pvalues <- read_rds("data/nulls/nulls-gyuri.rds") %>%
+pvalues <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   filter(stat == "ptpval") %>%
   select(-stat) %>%
   mutate(fdr = pAnal(value),

@@ -8,6 +8,7 @@
 *.toc
 *.synctex.gz
 *.html
+.Rproj.user
 /data/large_data
 /data/permdat
-.Rproj.user
+/interactive
