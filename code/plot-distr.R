@@ -18,15 +18,3 @@ read_csv("data/permdat/master.csv", show_col_types = FALSE) %>%
   geom_histogram(colour = "steelblue", fill = "steelblue", alpha = 0.2, bins = 40) +
   geom_vline(aes(xintercept = first(obs)), colour = "firebrick") +
   theme_bw()
-
-pdat <- read_rds("data/large_data/perm-data-1e5-perms.rds")
-pdat %>%
-  filter(juniors, !inactives, floor == 1000, metric == "mean") %>%
-  filter(fed == "ARG") %>%
-  mutate(obs = pmap_dbl(list(`F`, `M`, metric), obsDiff)) %>%
-  select(obs, permuts) %>%
-  unnest(permuts) %>%
-  ggplot(aes(x = permuts)) +
-  geom_histogram(colour = "steelblue", fill = "steelblue", alpha = 0.2, bins = 40) +
-  geom_vline(aes(xintercept = first(obs)), colour = "firebrick") +
-  theme_bw()
