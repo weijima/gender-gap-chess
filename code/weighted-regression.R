@@ -40,15 +40,15 @@ diff_table <- function(rating_data, .f = mean) {
 wreg <- function(rating_data, null_data, .f = mean) {
   diff_table(rating_data, .f) %>%
     inner_join(null_data, by = "fed") %>%
-    transmute(fed, yP = y - mean, E, A, weights = 1 / sd^2) %>%
-    lm(yP ~ E + A, data = ., weights = weights)
+    transmute(fed, yP = y - mean, E, A, weight = 1 / sd^2) %>%
+    lm(yP ~ E + A, data = ., weights = weight)
 }
 
 adjusted_data <- function(rating_data, null_data, .f = mean) {
   difftab <- diff_table(rating_data, .f) %>%
     inner_join(null_data, by = "fed") %>%
-    transmute(fed, yP = y - mean, E, A, weights = 1 / sd^2)
-  fit <- lm(yP ~ E + A, data = difftab, weights = weights)
+    transmute(fed, yP = y - mean, E, A, weight = 1 / sd^2)
+  fit <- lm(yP ~ E + A, data = difftab, weights = weight)
   wE <- coef(fit)["E"]
   wA <- coef(fit)["A"]
   difftab %>% mutate(fed, yPEA = yP - wE*E - wA*A)
@@ -132,5 +132,5 @@ crossing(fun = list(mean = mean, top10 = top10, top1 = top1),
                                                   min_rating = ..3),
                                     .f = ..1))) %>%
   unnest(tab) %>%
-  select(metric, juniors, floor, fed, yP, yPEA, E, A, weights) %>%
+  select(metric, juniors, floor, fed, yP, yPEA, E, A, weight) %>%
   write_csv("data/age-experience-tab.csv")
