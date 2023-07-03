@@ -5,35 +5,19 @@ sourceCpp("code/permutation-table.cpp")
 
 top1 <- max
 
-participation_gap <- function(rating_data) {
-  rating_data %>%
-    count(fed, sex, name = "no_of_players") %>%
-    pivot_wider(names_from = "sex", values_from = "no_of_players") %>%
-    replace_na(list(`F` = 0, `M` = 0)) %>%
-    mutate(participation_gap = `M` / (`F` + `M`))
-}
-
-federations <- function(rating_data, min_players) {
-  participation_gap(rating_data) %>%
-    mutate(no_minority = pmin(`F`, `M`)) %>%
-    filter(no_minority >= min_players) %>%
-    pull(fed)
-}
-
 restrict_data <- function(rating_data, include_junior = TRUE, include_inactive = FALSE,
-                          min_rating = 1000, min_players = 30, birth_uncertain = FALSE) {
+                          min_rating = 1000, birth_uncertain = FALSE) {
   if (include_junior) max_byear <- 2019 else max_byear <- 1999
   rating_data %>%
     filter(if (include_inactive) TRUE else active) %>%
     filter(if (birth_uncertain) TRUE else born != 0) %>%
-    filter(born <= max_byear, rating >= min_rating) %>%
-    filter(fed %in% federations(., min_players))
+    filter(born <= max_byear, rating >= min_rating)
 }
 
 perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
   rating_data %>%
     restrict_data(juniors, inactives, floor) %>%
-    select(fed, sex, rating) %>%
+    select(sex, rating) %>%
     pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
     mutate(permuts = map2(`F`, `M`, \(f, m) permut_tab(f, m, fn, perms)))
 }
@@ -50,4 +34,4 @@ crossing(juniors = c(FALSE, TRUE),
   mutate(results = pmap(list(juniors, inactives, floor, fn),
                         perm_generator, rating_data = rating_data, perms = 100000)) %>%
   unnest(results) %>%
-  write_rds("data/perm-data-1e5-perms.rds", compress = "xz")
+  write_rds("data/perm-global.rds", compress = "xz")
