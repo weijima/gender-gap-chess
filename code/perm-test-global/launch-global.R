@@ -14,7 +14,8 @@ for (r in 1:60) {
     paste("# Run single task in foreground"),
     paste("module add R/4.2.2-nsc1-gcc-11.3.0-bare"),
     paste("cd", Sys.getenv("PWD")),
-    paste("Rscript code/generate-perm-table-cluster-global.R", r, perms),
+    paste("Rscript code/perm-test-global/generate-perm-table-cluster-global.R",
+          r, perms),
     paste("# "),
     paste("# Script ends here")
   ), f)
