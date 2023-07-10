@@ -2,8 +2,7 @@ library(tidyverse)
 
 
 # Load Richard's dataset:
-read_csv("data/large_data/ratings20191231_downloaded20211001.csv",
-         show_col_types = FALSE) %>%
+read_csv("data/rating-data-Richard.csv", show_col_types = FALSE) %>%
   # Rename columns to match those in my dataset:
   rename(id = fideid, fed = country, born = birthday, ratingRS = rating) %>%
   # Change column types to match mine:
