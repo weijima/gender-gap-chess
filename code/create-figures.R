@@ -430,6 +430,6 @@ fig3 <- figure_3(result_data = data_w_juniors_no_inactive,
                  feds_to_keep = feds,
                  age_experience_data = age_exp_w_juniors_no_ina)
 ggsave(plot = fig3, file = "data/figures/fig_3_w_jun_no_ina.png",
-       width = 8, height = 6)
+       width = 8, height = 8)
 
 
