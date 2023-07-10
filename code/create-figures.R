@@ -223,10 +223,12 @@ histogram_plot <- function(data, top, xlims = NULL) {
     filter(group == top) %>%
     ggplot(aes(x = OBS_diff)) +
     geom_histogram(aes(y = stat(count) / sum(count)),
-                   colour = "white", fill = "grey50") +
+                   colour = "white", fill = "grey50",
+                   bins = 30) +
     geom_vline(xintercept = 0, linetype = "dashed") +
-    expand_limits(y = c(0, 0.2), x = xlims) +
-    scale_y_continuous(breaks = c(0, 0.05, 0.1, 0.15, 0.2))
+    expand_limits(y = c(0, 0.3), x = xlims) +
+    geom_point(aes(x = mean(OBS_diff), y = -0.014), shape = 17, size = rel(1)) +
+    scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3))
 
   # expand_limits(y = c(0, 0.12), x = xlims) +
   # scale_y_continuous(breaks = c(0, 0.03, 0.06, 0.09, 0.12))
@@ -306,16 +308,19 @@ ggsave(plot = fig2, file = "data/figures/fig_2_no_jun_w_ina.png",
 
 
 # Figure 3
-adj_histogram_plot <- function(data, top, adj_var = "PTMEAN", xlims = NULL) {
+adj_histogram_plot <- function(data, top, adj_var = "PTMEAN", xlims = c(0, 800)) {
   data |>
     filter(group == top) |>
     mutate(ADJ = OBS_diff - .data[[adj_var]]) |>
     ggplot(aes(x = ADJ)) +
     geom_histogram(aes(y = stat(count) / sum(count)),
-                   colour = "white", fill = "grey50") +
+                   colour = "white", fill = "grey50",
+                   bins = 30) +
+    geom_point(aes(x = mean(ADJ), y = -0.013), shape = 17, size = rel(1)) +
     geom_vline(xintercept = 0, linetype = "dashed") +
-    expand_limits(y = c(0, 0.2), x = xlims) +
-    scale_y_continuous(breaks = c(0, 0.05, 0.1, 0.15, 0.2))
+    expand_limits(y = c(0, 0.3), x = xlims) +
+    scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3))
+    # scale_y_continuous(breaks = c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3))
   # expand_limits(y = c(0, 0.12), x = xlims) +
   # scale_y_continuous(breaks = c(0, 0.03, 0.06, 0.09, 0.12))
 }
@@ -369,19 +374,20 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
 
   # first row: adjusted mean rating
   p11 <- adj_histogram_plot(data, top = "ALL", xlims = c(0, 800)) +
-    labs(x = "Overall \u0394 mean rating", y = "Proportion")
+    labs(x = "P-adjusted mean gap", y = "Proportion")
+    # labs(x = "Overall \u0394 mean rating", y = "Proportion")
   p12 <- adj_histogram_plot(data, top = "MAX10", xlims = c(0, 800)) +
-    labs(x = "P-adj. \u0394 mean rating (Top 10)", y = "Proportion")
+    labs(x = "P-adjusted top 10 gap", y = "Proportion")
   p13 <- adj_histogram_plot(data, top = "MAX1", xlims = c(0, 800)) +
-    labs(x = "P-adj. \u0394 rating (Top 1)", y = "Proportion")
+    labs(x = "P-adjusted top 1 gap", y = "Proportion")
 
   # second row: experiene women vs. age men.
   p21 <- experience_scatter(rating_data, top = Inf) +
     labs(x = "Mean # Games M", y = "Mean # Games W")
   p22 <- experience_scatter(rating_data, top = 10) +
-    labs(x = "Mean # Games M (Top 10)", y = "# Games W (Top 10)")
+    labs(x = "Mean # Games M top 10", y = "Mean # Games W top 10")
   p23 <- experience_scatter(rating_data, top = 1) +
-    labs(x = "# Games M (Top 1)", y = "# Games (Top 1)")
+    labs(x = "# Games M top 1", y = "# Games top 1")
 
   # Third row: Age women vs. age men
   p31 <- age_scatter(data, top = "ALL") +
@@ -428,7 +434,8 @@ age_exp_w_juniors_no_ina <- age_experience_data |>
 fig3 <- figure_3(result_data = data_w_juniors_no_inactive,
                  rating_data = raw_data_w_juniors_no_inactive_worldwide,
                  feds_to_keep = feds,
-                 age_experience_data = age_exp_w_juniors_no_ina)
+                 age_experience_data = age_exp_w_juniors_no_ina) &
+  theme(axis.title =element_text(size=rel(0.9)))
 ggsave(plot = fig3, file = "data/figures/fig_3_w_jun_no_ina.png",
        width = 8, height = 8)
 
