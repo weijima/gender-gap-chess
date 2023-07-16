@@ -30,25 +30,22 @@ chess <- fread("data/rating-data.csv")  |>
   mutate(age = year(as.Date("2019-01-01")) - born)
 
 raw_data_w_juniors_no_inactive_worldwide <- chess |>
-  filter(sex != "",
-         active)
-
+  filter(active)
 raw_data_w_juniors_w_inactive_worldwide <- chess |>
-  filter(sex != "",
-         age > 18)
+  filter(age > 18)
 raw_data_no_juniors_no_inactive_worldwide <- chess %>%
-  filter(sex != "",
-         age > 18,
+  filter(age > 18,
          active)
 raw_data_no_juniors_w_inactive_worldwide <- chess %>%
-  filter(sex != "",
-         age > 18)
+  filter(age > 18)
 
 # results from Richard
 data_w_juniors_no_inactive <- fread("data/nulls-Richard/nulls-J1-I0.csv")
 data_w_juniors_w_inactive <- fread("data/nulls-Richard/nulls-J1-I1.csv")
 data_no_juniors_no_inactive <- fread("data/nulls-Richard/nulls-J0-I0.csv")
 data_no_juniors_w_inactive <- fread("data/nulls-Richard/nulls-J0-I1.csv")
+
+results <- fread("data/null-stats.csv")
 
 # federations to include
 feds <- data_w_juniors_no_inactive |>
@@ -92,19 +89,19 @@ create_histogram <- function(data, bwidth = 100) {
 }
 
 hist <- create_histogram(raw_data_w_juniors_no_inactive_worldwide)
-ggsave(plot = hist, file = "data/figures/fig_1_w_jun_no_ina.png",
+ggsave(plot = hist, file = "figures/fig_1_w_jun_no_ina.png",
        width = 3.7, height = 2)
 
 hist <- create_histogram(raw_data_w_juniors_w_inactive_worldwide)
-ggsave(plot = hist, file = "data/figures/fig_1_w_jun_w_ina.png",
+ggsave(plot = hist, file = "figures/fig_1_w_jun_w_ina.png",
        width = 3.7, height = 2)
 
 hist <- create_histogram(raw_data_no_juniors_no_inactive_worldwide)
-ggsave(plot = hist, file = "data/figures/fig_1_no_jun_no_ina.png",
+ggsave(plot = hist, file = "figures/fig_1_no_jun_no_ina.png",
        width = 3.7, height = 2)
 
 hist <- create_histogram(raw_data_no_juniors_w_inactive_worldwide)
-ggsave(plot = hist, file = "data/figures/fig_1_no_jun_w_ina.png",
+ggsave(plot = hist, file = "figures/fig_1_no_jun_w_ina.png",
        width = 3.7, height = 2)
 
 
@@ -274,28 +271,28 @@ fig2 <- reformat_results_data(data_w_juniors_no_inactive,
                               raw_data_w_juniors_no_inactive_worldwide,
                               feds) |>
   figure_2()
-ggsave(plot = fig2, file = "data/figures/fig_2_w_jun_no_ina.png",
+ggsave(plot = fig2, file = "figures/fig_2_w_jun_no_ina.png",
        width = 8, height = 4)
 
 fig2 <- reformat_results_data(data_w_juniors_w_inactive,
                               raw_data_w_juniors_w_inactive_worldwide,
                               feds) |>
   figure_2()
-ggsave(plot = fig2, file = "data/figures/fig_2_w_jun_w_ina.png",
+ggsave(plot = fig2, file = "figures/fig_2_w_jun_w_ina.png",
        width = 8, height = 4)
 
 fig2 <- reformat_results_data(data_no_juniors_no_inactive,
                               raw_data_no_juniors_no_inactive_worldwide,
                               feds) |>
   figure_2()
-ggsave(plot = fig2, file = "data/figures/fig_2_no_jun_no_ina.png",
+ggsave(plot = fig2, file = "figures/fig_2_no_jun_no_ina.png",
        width = 8, height = 4)
 
 fig2 <- reformat_results_data(data_no_juniors_w_inactive,
                               raw_data_no_juniors_w_inactive_worldwide,
                               feds) |>
   figure_2()
-ggsave(plot = fig2, file = "data/figures/fig_2_no_jun_w_ina.png",
+ggsave(plot = fig2, file = "figures/fig_2_no_jun_w_ina.png",
        width = 8, height = 4)
 
 
@@ -436,7 +433,7 @@ fig3 <- figure_3(result_data = data_w_juniors_no_inactive,
                  feds_to_keep = feds,
                  age_experience_data = age_exp_w_juniors_no_ina) &
   theme(axis.title =element_text(size=rel(0.9)))
-ggsave(plot = fig3, file = "data/figures/fig_3_w_jun_no_ina.png",
+ggsave(plot = fig3, file = "figures/fig_3_w_jun_no_ina.png",
        width = 8, height = 8)
 
 
