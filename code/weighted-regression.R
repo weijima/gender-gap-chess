@@ -116,21 +116,24 @@ analyze_age_experience(rating_data, null_data, min_rating = 1000, min_players = 
 # Table of coefficients, weights, and regression results for all parameter combinations:
 crossing(fun = list(mean = mean, top10 = top10, top1 = top1),
          juniors = c(TRUE, FALSE),
+         inactives = c(TRUE, FALSE),
          floor = c(1000, 1400, 1600)) %>%
   mutate(metric = names(fun)) %>%
-  mutate(tab = pmap(list(fun, juniors, floor, metric),
-                    ~rating_data %>%
-                      restrict_data(max_byear = ifelse(..2, 2019, 1999),
-                                    min_rating = ..3,
-                                    min_players = 30,
-                                    include_inactive = FALSE,
-                                    birth_uncertain = FALSE) %>%
-                      adjusted_data(restrict_null(null_data,
-                                                  metr = ..4,
-                                                  include_junior = ..2,
-                                                  include_inactive = FALSE,
-                                                  min_rating = ..3),
-                                    .f = ..1))) %>%
+  mutate(tab = pmap(list(fun, juniors, inactives, floor, metric),
+                    function(fun, juniors, inactives, floor, metric) {
+                      rating_data %>%
+                        restrict_data(max_byear = ifelse(juniors, 2019, 1999),
+                                      min_rating = floor,
+                                      min_players = 30,
+                                      include_inactive = inactives,
+                                      birth_uncertain = FALSE) %>%
+                        adjusted_data(restrict_null(null_data,
+                                                    metr = metric,
+                                                    include_junior = juniors,
+                                                    include_inactive = inactives,
+                                                    min_rating = floor),
+                                      .f = metric)
+                    })) %>%
   unnest(tab) %>%
-  select(metric, juniors, floor, fed, yP, yPEA, E, A, weight) %>%
+  select(metric, juniors, inactives, floor, fed, yP, yPEA, E, A, weight) %>%
   write_csv("data/age-experience-tab.csv")
