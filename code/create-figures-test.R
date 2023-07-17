@@ -31,7 +31,8 @@ rating_data <- read_csv("data/rating-data.csv", show_col_types = FALSE) %>%
 
 null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   # Original nulls follow F - M convention; switching to M - F:
-  mutate(value = ifelse(stat == "ptpval", 1 - value, -value))
+  mutate(value = case_when(stat %in% c("obs", "ptmean") ~ -value,
+                           stat == "ptpval" ~ 1 - value, .default = value))
 
 feds <- nulls(null_data, "juniors", "no_inactives") %>% pull(fed) %>% unique()
 
@@ -297,7 +298,7 @@ figure_3(result_data = nulls(null_data, "juniors", "no_inactives"),
          feds_to_keep = feds,
          age_experience_data = read_csv("data/age-experience-tab.csv",
                                         show_col_types = FALSE) %>%
-           filter(floor == 1000, juniors) %>%
+           filter(floor == 1000, juniors, !inactives) %>%
            select(fed, yPEA, metric) %>%
            mutate(metric = case_match(metric, "mean" ~ "ALL", "top10" ~ "MAX10",
                                       "top1" ~ "MAX1"))) &
