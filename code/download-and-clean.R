@@ -130,4 +130,5 @@ system(str_c("rmdir data/tmp")) # Remove temporary directory
 # Add column with number of games played from 2012 Oct to 2019 Dec:
 read_rds("data/raw-data.rds") %>% # Load large data file created above
   sum_games() %>%
+  mutate(born = ifelse(born == 0, NA, born)) %>% # Change uncertain birth from 0 to NA
   write_csv("data/rating-data.csv")

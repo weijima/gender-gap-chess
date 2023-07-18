@@ -1,11 +1,14 @@
 library(tidyverse)
 
-pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
-  p_female <- p.adjust(pvalues, method = method)
-  p_male <- p.adjust(1 - pvalues, method = method)
+p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
+  p_female <- p.adjust(1 - pvalues, method = method)
+  p_male <- p.adjust(pvalues, method = method)
+  # The factor of 2 simply introduces a symbol to distinguish women (2) from men (1):
   signif_female <- 2L * (p_female < signif / 2)
   signif_male <- 1L * (p_male < signif / 2)
+  # The nonzero entries of signif_female and signif_male are completely nonoverlapping:
   s <- signif_female + signif_male
+  # Translate the arbitrary symbols 2 and 1 into test describing significance:
   case_when(
     s == 2 ~ "female-slanted",
     s == 1 ~ "male-slanted",
@@ -19,8 +22,8 @@ pAnal <- function(pvalues, signif = 0.05, method = "fdr") {
 pvalues <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   filter(stat == "ptpval") %>%
   select(-stat) %>%
-  mutate(fdr = pAnal(value),
-         none = pAnal(value, method = "none"),
+  mutate(fdr = p_anal(value),
+         none = p_anal(value, method = "none"),
          .by = c(juniors, inactives, floor, metric)) %>%
   pivot_longer(cols = c(fdr, none), names_to = "method", values_to = "signif")
 

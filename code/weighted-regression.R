@@ -3,8 +3,7 @@ library(tidyverse)
 participation_gap <- function(rating_data) {
   rating_data %>%
     count(fed, sex, name = "no_of_players") %>%
-    pivot_wider(names_from = "sex", values_from = "no_of_players") %>%
-    replace_na(list(`F` = 0, `M` = 0)) %>%
+    pivot_wider(names_from = "sex", values_from = "no_of_players", values_fill = 0) %>%
     mutate(participation_gap = `M` / (`F` + `M`))
 }
 
@@ -19,8 +18,8 @@ restrict_data <- function(rating_data, max_byear, min_rating, min_players = 30,
                           include_inactive = FALSE, birth_uncertain = FALSE) {
   rating_data %>%
     filter(if (include_inactive) TRUE else active) %>%
-    filter(if (birth_uncertain) TRUE else born != 0) %>%
-    filter(born <= max_byear, rating >= min_rating) %>%
+    filter(if (birth_uncertain) TRUE else !is.na(born)) %>%
+    filter(born <= max_byear | is.na(born), rating >= min_rating) %>%
     filter(fed %in% federations(., min_players))
 }
 
@@ -32,7 +31,6 @@ diff_table <- function(rating_data, .f = mean) {
     slice_head(n = { if (identical(.f, top10)) 10 else
       if (identical(.f, top1)) 1 else nrow(.) }) %>%
     summarise(rating=mean(rating), games=mean(games), age=mean(age), .groups="drop") %>%
-    ungroup() %>%
     pivot_wider(names_from = sex, values_from = c(rating, games, age)) %>%
     transmute(fed, y = rating_M - rating_F, E = games_M - games_F, A = age_M - age_F)
 }
@@ -100,7 +98,7 @@ analyze_age_experience <- function(rating_data, null_data, min_rating = 1000,
 
 rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
-null_data <- read_csv("data/null-stats.csv") %>%
+null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(value = case_when( # Adjust values for different conventions (F - M to M - F)
     stat %in% c("obs", "ptmean") ~ -value,
     stat == "ptpval" ~ 1 - value,

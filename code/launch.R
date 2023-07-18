@@ -7,7 +7,7 @@ for (r in 1:60) {
     paste("#!/bin/bash"),
     paste("#SBATCH -J", jobname),
     paste("#SBATCH -A liu-2018-29"),
-    paste("#SBATCH -t 10:00:00"),
+    paste("#SBATCH -t 12:00:00"),
     paste("#SBATCH --mem=16000"),
     paste("#SBATCH -n 1"),
     paste("# "),

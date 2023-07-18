@@ -6,9 +6,7 @@ read_csv("data/rating-data-Richard.csv", show_col_types = FALSE) %>%
   # Rename columns to match those in new dataset:
   rename(id = fideid, fed = country, born = birthday, ratingRS = rating) %>%
   # Match column types:
-  mutate(id = as.character(id)) %>%
-  # And change NA in birth year to 0 (again, to match the new setup):
-  mutate(born = if_else(is.na(born), 0L, as.integer(born))) %>%
+  mutate(id = as.character(id), born = as.integer(born)) %>%
   # Change NA flag values to "m" (any character without an "i", for "inactive", will do):
   mutate(flag = if_else(is.na(flag), "m", flag)) %>%
   # Create a logical column called "active", based on whether "flag" contains an "i":

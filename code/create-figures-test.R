@@ -25,7 +25,6 @@ nulls <- function(null_data = null_data, jun, inact, rating_floor = 1000) {
 
 
 rating_data <- read_csv("data/rating-data.csv", show_col_types = FALSE) %>%
-  mutate(born = ifelse(born == 0, NA, born)) %>%
   filter(!is.na(born)) %>%
   mutate(age = year(as.Date("2019-01-01")) - born)
 

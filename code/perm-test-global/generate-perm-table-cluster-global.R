@@ -20,7 +20,7 @@ restrict_data <- function(rating_data, include_junior, include_inactive, min_rat
   rating_data %>%
     filter(if (include_inactive) TRUE else active) %>%
     filter(if (birth_uncertain) TRUE else born != 0) %>%
-    filter(born <= max_byear, rating >= min_rating)
+    filter(born <= max_byear | is.na(born), rating >= min_rating)
 }
 
 perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
@@ -28,7 +28,7 @@ perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
     restrict_data(juniors, inactives, floor) %>%
     select(sex, rating) %>%
     pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
-    mutate(permuts = map2(`F`, `M`, \(f, m) permut_tab(f, m, fn, perms)))
+    mutate(permuts = map2(`M`, `F`, function(m, f) permut_tab(m, f, fn, perms)))
 }
 
 
