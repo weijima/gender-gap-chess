@@ -38,16 +38,9 @@ read_csv("data/nulls-Richard/null-stats-Richard.csv", show_col_types = FALSE) %>
   filter(str_detect(metric, "(_pt|obs)")) %>%
   separate_wider_delim(metric, delim = "_", names = c("metric", "stat")) %>%
   # Merge the data with updated permutation results:
-  left_join(read_csv("data/null-stats-global.csv", show_col_types = FALSE) %>%
-              bind_rows(read_csv("data/null-stats.csv", show_col_types = FALSE)) %>%
+  left_join(read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
               rename(value2 = value), # Rename value column, to compare with Richard's
             by = join_by(juniors, inactives, floor, metric, fed, stat)) %>%
-  # Adjust updated values for different conventions (F - M to M - F):
-  mutate(value2 = case_when(
-    stat %in% c("obs", "ptmean") ~ -value2,
-    stat == "ptpval" ~ 1 - value2,
-    .default = value2
-  )) %>%
   # Create plot:
   ggplot(aes(x = value, y = value2)) +
   geom_point(colour = "steelblue", alpha = 0.25) +

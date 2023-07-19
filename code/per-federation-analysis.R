@@ -20,7 +20,7 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
 
 # Table of raw p-values, along with the corrected significance for each federation:
 pvalues <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
-  filter(stat == "ptpval") %>%
+  filter(fed != "ALL", stat == "ptpval") %>%
   select(-stat) %>%
   mutate(fdr = p_anal(value),
          none = p_anal(value, method = "none"),

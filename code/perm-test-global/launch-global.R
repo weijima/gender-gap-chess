@@ -1,7 +1,7 @@
 perms <- 1e6L
 
 for (r in 1:60) {
-  jobname <- sprintf("CP%02d.sh", r)
+  jobname <- sprintf("CPG%02d.sh", r)
   f <- file(jobname)
   writeLines(c(
     paste("#!/bin/bash"),

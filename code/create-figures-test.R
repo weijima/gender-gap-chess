@@ -29,9 +29,7 @@ rating_data <- read_csv("data/rating-data.csv", show_col_types = FALSE) %>%
   mutate(age = year(as.Date("2019-01-01")) - born)
 
 null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
-  # Original nulls follow F - M convention; switching to M - F:
-  mutate(value = case_when(stat %in% c("obs", "ptmean") ~ -value,
-                           stat == "ptpval" ~ 1 - value, .default = value))
+  filter(fed != "ALL")
 
 feds <- nulls(null_data, "juniors", "no_inactives") %>% pull(fed) %>% unique()
 

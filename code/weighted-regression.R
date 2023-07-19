@@ -1,5 +1,9 @@
 library(tidyverse)
 
+top1 <- max
+
+top10 <- function(x) mean(tail(sort(x), 10))
+
 participation_gap <- function(rating_data) {
   rating_data %>%
     count(fed, sex, name = "no_of_players") %>%
@@ -21,6 +25,19 @@ restrict_data <- function(rating_data, max_byear, min_rating, min_players = 30,
     filter(if (birth_uncertain) TRUE else !is.na(born)) %>%
     filter(born <= max_byear | is.na(born), rating >= min_rating) %>%
     filter(fed %in% federations(., min_players))
+}
+
+restrict_null <- function(null_tab, metr, include_junior = TRUE,
+                          include_inactive = FALSE, min_rating = 1000) {
+  null_tab %>%
+    filter(juniors == include_junior,
+           inactives == include_inactive,
+           floor == min_rating,
+           metric == metr,
+           stat %in% c("ptmean", "ptsd")) %>%
+    select(fed, stat, value) %>%
+    pivot_wider(names_from = stat, values_from = value) %>%
+    rename(mean = ptmean, sd = ptsd)
 }
 
 diff_table <- function(rating_data, .f = mean) {
@@ -52,24 +69,6 @@ adjusted_data <- function(rating_data, null_data, .f = mean) {
   difftab %>% mutate(fed, yPEA = yP - wE*E - wA*A)
 }
 
-restrict_null <- function(null_tab, metr, include_junior = TRUE,
-                          include_inactive = FALSE, min_rating = 1000) {
-
-  null_tab %>%
-    filter(juniors == include_junior,
-           inactives == include_inactive,
-           floor == min_rating,
-           metric == metr,
-           stat %in% c("ptmean", "ptsd")) %>%
-    select(fed, stat, value) %>%
-    pivot_wider(names_from = stat, values_from = value) %>%
-    rename(mean = ptmean, sd = ptsd)
-}
-
-top10 <- function(x) mean(tail(sort(x), 10))
-
-top1 <- max
-
 analyze_age_experience <- function(rating_data, null_data, min_rating = 1000,
                                    min_players = 30, include_junior = TRUE,
                                    include_inactive = FALSE, birth_uncertain = FALSE) {
@@ -99,11 +98,7 @@ analyze_age_experience <- function(rating_data, null_data, min_rating = 1000,
 rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
 null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
-  mutate(value = case_when( # Adjust values for different conventions (F - M to M - F)
-    stat %in% c("obs", "ptmean") ~ -value,
-    stat == "ptpval" ~ 1 - value,
-    .default = value
-  ))
+  filter(fed != "ALL")
 
 
 # Perform weighted regression, with a given set of parameters:
@@ -116,7 +111,7 @@ crossing(fun = list(mean = mean, top10 = top10, top1 = top1),
          juniors = c(TRUE, FALSE),
          inactives = c(TRUE, FALSE),
          floor = c(1000, 1400, 1600)) %>%
-  mutate(metric = names(fun)) %>%
+  mutate(metric = names(fun), fun = unname(fun)) %>%
   mutate(tab = pmap(list(fun, juniors, inactives, floor, metric),
                     function(fun, juniors, inactives, floor, metric) {
                       rating_data %>%
@@ -130,7 +125,7 @@ crossing(fun = list(mean = mean, top10 = top10, top1 = top1),
                                                     include_junior = juniors,
                                                     include_inactive = inactives,
                                                     min_rating = floor),
-                                      .f = metric)
+                                      .f = fun)
                     })) %>%
   unnest(tab) %>%
   select(metric, juniors, inactives, floor, fed, yP, yPEA, E, A, weight) %>%

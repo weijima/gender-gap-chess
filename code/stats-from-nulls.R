@@ -8,7 +8,7 @@ obs_diff <- function(m, w, metric) match.fun(metric)(m) - match.fun(metric)(w)
 
 raw_pval <- function(m, w, metric, permuts) {
   obs <- obs_diff(m, w, metric)
-  length(permuts[obs > permuts]) / length(permuts)
+  length(permuts[obs < permuts]) / length(permuts)
 }
 
 
@@ -29,5 +29,6 @@ for (file in Sys.glob("data/permdat/perm*.rds")) {
 }
 
 permtab %>%
+  mutate(fed = ifelse(is.na(fed), "ALL", fed)) %>% # Add fed = ALL to global results
   arrange(juniors, inactives, floor, metric, fed) %>%
   write_csv("data/null-stats.csv")
