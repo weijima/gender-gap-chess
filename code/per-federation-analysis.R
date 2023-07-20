@@ -1,5 +1,6 @@
 library(tidyverse)
 
+
 p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
   p_female <- p.adjust(1 - pvalues, method = method)
   p_male <- p.adjust(pvalues, method = method)
@@ -30,13 +31,21 @@ pvalues <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
 # Generate Table 2 from the manuscript:
 pvalues %>%
   summarise(n = n(), .by = c(juniors, inactives, floor, metric, method, signif)) %>%
-  mutate(Federations = sum(n), .by = c(juniors, inactives, floor, method, metric)) %>%
+  mutate(feds = sum(n), .by = c(juniors, inactives, floor, method, metric)) %>%
   pivot_wider(names_from = signif, values_from = n, values_fill = 0) %>%
-  mutate(Filter = str_c("J", 1 * juniors, ".I", 1 * inactives, ".", floor)) %>%
-  transmute(Filter, Federations, method, metric, s = `female-slanted`+`male-slanted`) %>%
-  group_by(Filter, Federations, metric) %>%
-  summarise(sig = str_c(s[method=="none"]," (",s[method=="fdr"],")"), .groups="drop") %>%
-  pivot_wider(names_from = metric, values_from = sig)
+  mutate(juniors = ifelse(juniors, "Yes", "No"),
+         inactives = ifelse(inactives, "Yes", "No"),
+         s = `female-slanted` + `male-slanted`) %>%
+  select(-contains("-")) %>%
+  summarise(sig = str_c(s[method == "none"]," (", s[method == "fdr"], ")"),
+            .by = c(juniors, inactives, floor, feds, metric)) %>%
+  mutate(metric = str_to_title(metric),
+         metric = ifelse(metric == "Sd", "SD", metric)) %>%
+  mutate(floor = ifelse(floor == 1000, 0, floor)) %>%
+  pivot_wider(names_from = metric, values_from = sig) %>%
+  rename(`Junior players` = juniors, `Inactive players` = inactives,
+         `No. of federations` = feds, `Rating floor` = floor) %>%
+  knitr::kable(format = "latex")
 
 # Sample part of the data:
 pvalues %>%
