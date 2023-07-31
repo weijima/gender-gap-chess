@@ -37,31 +37,31 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   pivot_longer(cols = c(fdr, none), names_to = "method", values_to = "signif") %>%
   filter(method == "fdr") %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
-  mutate(metric = fct_relevel(metric, "mean", "top10")) %>%
+  mutate(metric = fct_relevel(metric, "top1", "top10")) %>%
   mutate(filter = fct_rev(str_c("J", 1*juniors, "-I", 1*inactives)), .before = 1) %>%
   arrange(juniors, inactives, floor, fed, metric) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
-  mutate(signif = ifelse(response == "yP", signif, "nonsignificant")) %>%
-  mutate(signif = ifelse(signif == "significant", signif, "nonsignificant / NA")) %>%
+  mutate(signif = ifelse(response == "yP", signif, "federation")) %>%
   mutate(floor = as_factor(floor)) %>%
   mutate(response = case_match(response, "y" ~ "raw", "yP" ~ "participation-corrected",
                                "yPEA" ~ "PEA-corrected")) %>%
   mutate(response = fct_relevel(response, "raw", "participation-corrected")) %>%
   ggplot() +
   geom_boxplot(aes(x = floor, y = gap, fill = filter), outlier.shape = NA) +
-  geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif),
+  geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_jitterdodge(jitter.width = 0.06, seed = 54321)) +
+  geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
   labs(x = "rating floor", y = "rating gap (men - women)") +
   facet_grid(metric ~ response, scale = "free_y") +
   scale_colour_manual(name = "filter: ",
                       values = rev(c("steelblue","forestgreen","goldenrod","plum3"))) +
-  #scale_colour_viridis_d(name = "filter: ", option = "A", begin = 0.9, end = 0) +
   scale_fill_manual(name = "filter: ",
                     values = rev(c("white","white","white","white"))) +
-  scale_alpha_manual(name = "", values = c(0.2, 1)) +
+  scale_alpha_manual(name = "", values = c(0.7, 0.2, 1)) +
+  scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   guides(color = guide_legend(order = 1, override.aes = list(alpha = 1)),
          fill = guide_legend(order = 1),
-         alpha = guide_legend(order = 2)) +
+         alpha = guide_legend(order = 2, override.aes = list(shape = c(1, 19, 19)))) +
   theme_bw() +
   theme(legend.position = "bottom")
 #ggsave("figures/fig_4_test.pdf", width = 10, height = 8.57)
