@@ -42,6 +42,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   arrange(juniors, inactives, floor, fed, metric) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
   mutate(signif = ifelse(response == "yP", signif, "federation")) %>%
+  mutate(signif = fct_relevel(signif, "federation", "significant")) %>%
   mutate(floor = as_factor(floor)) %>%
   mutate(response = case_match(response, "y" ~ "raw", "yP" ~ "participation-corrected",
                                "yPEA" ~ "PEA-corrected")) %>%
@@ -57,7 +58,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
                       values = rev(c("steelblue","forestgreen","goldenrod","plum3"))) +
   scale_fill_manual(name = "filter: ",
                     values = rev(c("white","white","white","white"))) +
-  scale_alpha_manual(name = "", values = c(0.7, 0.2, 1)) +
+  scale_alpha_manual(name = "", values = c(0.7, 1, 0.2)) +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   guides(color = guide_legend(order = 1, override.aes = list(alpha = 1)),
          fill = guide_legend(order = 1),
