@@ -237,24 +237,31 @@ figure_2 <- function(data) {
   p11 <- scatter_plot(data, top = "ALL", lims = c(1200, 2900)) +
     labs(y = "Mean rating W", x = "Mean rating M")
   p12 <- scatter_plot(data, top = "MAX10", lims = c(1200, 2900)) +
-    labs(y = "Mean rating W (Top 10)", x = "Mean rating M (Top 10)")
+    labs(y = "Mean rating W (top 10)", x = "Mean rating M (top 10)")
   p13 <- scatter_plot(data, top = "MAX1", lims = c(1200, 2900)) +
-    labs(y = "Mean rating W (Top 1)", x = "Mean rating M (Top 1)")
+    labs(y = "Mean rating W (top 1)", x = "Mean rating M (top 1)")
   p14 <- scatter_plot(data, top = "SD") +
     labs(y = "SD rating W", x = "SD rating M")
 
   p21 <- histogram_plot(data, top = "ALL", xlims = c(0, 800)) +
-    labs(x = "\u0394 mean rating", y = "Proportion")
+    labs(x = "Unadjustated mean rating gap", y = "Proportion")
   p22 <- histogram_plot(data, top = "MAX10", xlims = c(0, 800)) +
-    labs(x = "\u0394 mean rating (Top 10)", y = "Proportion")
+    labs(x = "Unadjusted mean rating gap (top 10)", y = "Proportion")
   p23 <- histogram_plot(data, top = "MAX1", xlims = c(0, 800)) +
-    labs(x = "\u0394 rating (Top 1)", y = "Proportion")
+    labs(x = "Unadjusted mean rating gap (top 1)", y = "Proportion")
   p24 <- histogram_plot(data, top = "SD", xlims = c(0, 200)) +
     labs(x = "\u0394 SD rating", y = "Proportion")
 
+  # layout <- "
+  # ACEG
+  # BDFH
+  # "
+
   layout <- "
-  ACEG
-  BDFH
+  AB
+  CD
+  EF
+  GH
   "
 
   (p11 + p21 + p12 + p22 + p13 + p23 + p14 + p24) +
@@ -272,7 +279,7 @@ fig2 <- reformat_results_data(data_w_juniors_no_inactive,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_w_jun_no_ina.png",
-       width = 8, height = 4)
+       width = 8, height = 6)
 
 fig2 <- reformat_results_data(data_w_juniors_w_inactive,
                               raw_data_w_juniors_w_inactive_worldwide,
@@ -390,9 +397,9 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
   p31 <- age_scatter(data, top = "ALL") +
     labs(x = "Mean Age M", y = "Mean Age W")
   p32 <- age_scatter(data, top = "MAX10") +
-    labs(x = "Mean Age M (Top 10)", y = "Mean Age W (Top 10)")
+    labs(x = "Mean Age M (top 10)", y = "Mean Age W (top 10)")
   p33 <- age_scatter(data, top = "MAX1") +
-    labs(x = "Age M (Top 1)", y = "Age W (Top 1)")
+    labs(x = "Age M (top 1)", y = "Age W (top 1)")
 
   p41 <- adj_histogram_plot(data, top = "ALL", adj_var = "yPEA", xlims = c(0, 800)) +
     labs(x = "PEA-adjusted mean gap", y = "Proportion")

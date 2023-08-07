@@ -223,6 +223,8 @@ experience_scatter <- function(rating_data, top = Inf) {
     ggplot(aes(y = F, x = M)) +
     geom_abline(aes(slope = 1, intercept = 0),
                 linetype = "dashed", color = "grey40") +
+    scale_y_continuous(breaks = c(0, 200, 400, 600, 800)) +
+    scale_x_continuous(breaks = c(0, 200, 400, 600, 800)) +
     geom_point(size = 0.8) +
     expand_limits(x = lims, y = lims)
 }
@@ -282,8 +284,21 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
   p43 <- adj_histogram_plot(data, top = "MAX1", adj_var = "yPEA", xlims = c(0, 800)) +
     labs(x = "PEA-adjusted top 1 gap", y = "Proportion")
 
+  # layout <- "
+  # ABC
+  # DEF
+  # GHI
+  # JKL
+  # "
+
+  layout <- "
+  ADGJ
+  BEHK
+  CFIL
+  "
+
   (p11 + p12 + p13 + p21 + p22 + p23 + p31 + p32 + p33 + p41 + p42 + p43) +
-    plot_layout(guides = "collect", design = "ABC\nDEF\nGHI\nJKL") +
+    plot_layout(guides = "collect", design = layout) +
     plot_annotation(tag_levels = "A") +
     theme(legend.position = 'bottom')  +
     theme(legend.title = ggtext::element_markdown())
@@ -300,4 +315,5 @@ figure_3(result_data = nulls(null_data, "juniors", "no_inactives"),
            mutate(metric = case_match(metric, "mean" ~ "ALL", "top10" ~ "MAX10",
                                       "top1" ~ "MAX1"))) &
   theme(axis.title = element_text(size = rel(0.9)))
-#ggsave(file = "figures/fig_3_w_jun_no_ina.pdf", width = 8, height = 8)
+ggsave(file = "figures/fig_3_w_jun_no_ina.pdf", width = 10, height = 8)
+
