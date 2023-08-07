@@ -63,6 +63,6 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   guides(color = guide_legend(order = 1, override.aes = list(alpha = 1)),
          fill = guide_legend(order = 1),
          alpha = guide_legend(order = 2, override.aes = list(shape = c(1, 19, 19)))) +
-  theme_bw() +
+  theme_bw(base_size = 14) +
   theme(legend.position = "bottom")
 #ggsave("figures/fig_4_test.pdf", width = 10, height = 8.57)
