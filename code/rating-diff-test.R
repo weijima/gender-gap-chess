@@ -50,9 +50,13 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(signif = ifelse(response == "yP", signif, "Federation")) %>%
   mutate(signif = fct_relevel(signif, "Federation", "Significant")) %>%
   mutate(floor = as_factor(floor)) %>%
-  mutate(response = case_match(response, "y" ~ "Raw", "yP" ~ "Participation-adjusted",
-                               "yPEA" ~ "PEA-adjusted")) %>%
-  mutate(response = fct_relevel(response, "Raw", "Participation-adjusted")) %>%
+  mutate(response = case_match(
+    response,
+    "y" ~ "Unadjusted",
+    "yP" ~ "Participation-adjusted",
+    "yPEA" ~ "PEA-adjusted"
+  )) %>%
+  mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
   ggplot() +
   geom_boxplot(aes(x = floor, y = gap, fill = filter), outlier.shape = NA) +
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
@@ -73,4 +77,4 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   theme(legend.position = "bottom", legend.box = "vertical",
         legend.direction = "vertical",
         legend.spacing.y = unit(0, "lines"), legend.margin = margin(0, 0, 0, 0))
-#ggsave("figures/fig_4_test.pdf", width = 10, height = 8.57)
+#ggsave("figures/fig_4.pdf", width = 10, height = 8.57)
