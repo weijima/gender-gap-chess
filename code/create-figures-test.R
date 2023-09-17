@@ -319,5 +319,5 @@ figure_3(result_data = nulls(null_data, "juniors", "no_inactives"),
            mutate(metric = case_match(metric, "mean" ~ "ALL", "top10" ~ "MAX10",
                                       "top1" ~ "MAX1"))) &
   theme(axis.title = element_text(size = rel(0.9)))
-ggsave(file = "figures/fig_3_w_jun_no_ina.pdf", width = 10, height = 8)
+ggsave(file = "figures/fig_3_w_jun_no_ina.pdf", width = 10, height = 7)
 
