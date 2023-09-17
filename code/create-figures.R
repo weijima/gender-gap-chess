@@ -1,3 +1,5 @@
+# this script has the current Figure 1? and Figure 2
+
 library(magrittr)
 library(data.table)
 library(ggplot2)
@@ -63,12 +65,12 @@ create_histogram <- function(data, bwidth = 100) {
     dplyr::filter(sex == "F") %>%
     dplyr::mutate(sex = "Women") %>%
     ggplot(aes(x = rating)) +
-    geom_histogram(aes(y = stat(count) / sum(count)),
+    geom_histogram(aes(y = after_stat(count) / sum(count)),
                    colour = "white", binwidth = bwidth) +
     facet_wrap(~ sex) +
     scale_y_continuous(limits = c(0, 0.15)) +
     scale_x_continuous(limits = c(1000, 2900)) +
-    labs(y = "Proportion", x = "Rating")
+    labs(y = "Proportion\nof federations", x = "Rating")
 
   hist_M <- data %>%
     dplyr::filter(sex == "M") %>%
@@ -80,7 +82,7 @@ create_histogram <- function(data, bwidth = 100) {
     # # theme_minimal() +
     scale_y_continuous(limits = c(0, 0.15)) +
     scale_x_continuous(limits = c(1000, 2900)) +
-    labs(y = "Proportion", x = "Rating")
+    labs(y = "Proportion\nof federations", x = "Rating")
 
   hist_all <- hist_F + hist_M +
     theme(axis.title.y = element_blank())
@@ -219,7 +221,7 @@ histogram_plot <- function(data, top, xlims = NULL) {
   data |>
     filter(group == top) %>%
     ggplot(aes(x = OBS_diff)) +
-    geom_histogram(aes(y = stat(count) / sum(count)),
+    geom_histogram(aes(y = after_stat(count) / sum(count)),
                    colour = "white", fill = "grey50",
                    bins = 30) +
     geom_vline(xintercept = 0, linetype = "dashed") +
@@ -237,20 +239,20 @@ figure_2 <- function(data) {
   p11 <- scatter_plot(data, top = "ALL", lims = c(1200, 2900)) +
     labs(y = "Mean rating W", x = "Mean rating M")
   p12 <- scatter_plot(data, top = "MAX10", lims = c(1200, 2900)) +
-    labs(y = "Mean rating W (top 10)", x = "Mean rating M (top 10)")
+    labs(y = "Mean rating W (Top 10)", x = "Mean rating M (Top 10)")
   p13 <- scatter_plot(data, top = "MAX1", lims = c(1200, 2900)) +
-    labs(y = "Mean rating W (top 1)", x = "Mean rating M (top 1)")
+    labs(y = "Mean rating W (Top 1)", x = "Mean rating M (Top 1)")
   p14 <- scatter_plot(data, top = "SD") +
     labs(y = "SD rating W", x = "SD rating M")
 
   p21 <- histogram_plot(data, top = "ALL", xlims = c(0, 800)) +
-    labs(x = "Unadjustated mean rating gap", y = "Proportion")
+    labs(x = "Unadjusted gap (All)", y = "Proportion\nof federations")
   p22 <- histogram_plot(data, top = "MAX10", xlims = c(0, 800)) +
-    labs(x = "Unadjusted mean rating gap (top 10)", y = "Proportion")
+    labs(x = "Unadjusted mean gap (Top 10)", y = "Proportion\nof federations")
   p23 <- histogram_plot(data, top = "MAX1", xlims = c(0, 800)) +
-    labs(x = "Unadjusted mean rating gap (top 1)", y = "Proportion")
+    labs(x = "Unadjusted mean gap (Top 1)", y = "Proportion\nof federations")
   p24 <- histogram_plot(data, top = "SD", xlims = c(0, 200)) +
-    labs(x = "\u0394 SD rating", y = "Proportion")
+    labs(x = "SD difference (men - women)", y = "Proportion\nof federations")
 
   # layout <- "
   # ACEG
@@ -279,28 +281,28 @@ fig2 <- reformat_results_data(data_w_juniors_no_inactive,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_w_jun_no_ina.png",
-       width = 8, height = 6)
+       width = 8, height = 7)
 
 fig2 <- reformat_results_data(data_w_juniors_w_inactive,
                               raw_data_w_juniors_w_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_w_jun_w_ina.png",
-       width = 8, height = 4)
+       width = 8, height = 7)
 
 fig2 <- reformat_results_data(data_no_juniors_no_inactive,
                               raw_data_no_juniors_no_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_no_jun_no_ina.png",
-       width = 8, height = 4)
+       width = 8, height = 7)
 
 fig2 <- reformat_results_data(data_no_juniors_w_inactive,
                               raw_data_no_juniors_w_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_no_jun_w_ina.png",
-       width = 8, height = 4)
+       width = 8, height = 7)
 
 
 
@@ -317,7 +319,7 @@ adj_histogram_plot <- function(data, top, adj_var = "PTMEAN", xlims = c(0, 800))
     filter(group == top) |>
     mutate(ADJ = OBS_diff - .data[[adj_var]]) |>
     ggplot(aes(x = ADJ)) +
-    geom_histogram(aes(y = stat(count) / sum(count)),
+    geom_histogram(aes(y = after_stat(count) / sum(count)),
                    colour = "white", fill = "grey50",
                    bins = 30) +
     geom_point(aes(x = mean(ADJ), y = -0.013), shape = 17, size = rel(1)) +
@@ -378,35 +380,35 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
 
   # first row: adjusted mean rating
   p11 <- adj_histogram_plot(data, top = "ALL", xlims = c(0, 800)) +
-    labs(x = "P-adjusted mean gap", y = "Proportion")
-    # labs(x = "Overall \u0394 mean rating", y = "Proportion")
+    labs(x = "P-adjusted gap (All)", y = "Proportion\nof federations")
+    # labs(x = "Overall \u0394 mean rating", y = "Proportion\nof federations")
   p12 <- adj_histogram_plot(data, top = "MAX10", xlims = c(0, 800)) +
-    labs(x = "P-adjusted top 10 gap", y = "Proportion")
+    labs(x = "P-adjusted gap (Top 10)", y = "Proportion\nof federations")
   p13 <- adj_histogram_plot(data, top = "MAX1", xlims = c(0, 800)) +
-    labs(x = "P-adjusted top 1 gap", y = "Proportion")
+    labs(x = "P-adjusted Top 1 gap", y = "Proportion\nof federations")
 
   # second row: experiene women vs. age men.
   p21 <- experience_scatter(rating_data, top = Inf) +
     labs(x = "Mean # Games M", y = "Mean # Games W")
   p22 <- experience_scatter(rating_data, top = 10) +
-    labs(x = "Mean # Games M top 10", y = "Mean # Games W top 10")
+    labs(x = "Mean # Games M Top 10", y = "Mean # Games W Top 10")
   p23 <- experience_scatter(rating_data, top = 1) +
-    labs(x = "# Games M top 1", y = "# Games top 1")
+    labs(x = "# Games M Top 1", y = "# Games Top 1")
 
   # Third row: Age women vs. age men
   p31 <- age_scatter(data, top = "ALL") +
     labs(x = "Mean Age M", y = "Mean Age W")
   p32 <- age_scatter(data, top = "MAX10") +
-    labs(x = "Mean Age M (top 10)", y = "Mean Age W (top 10)")
+    labs(x = "Mean Age M (Top 10)", y = "Mean Age W (Top 10)")
   p33 <- age_scatter(data, top = "MAX1") +
-    labs(x = "Age M (top 1)", y = "Age W (top 1)")
+    labs(x = "Age M (Top 1)", y = "Age W (Top 1)")
 
   p41 <- adj_histogram_plot(data, top = "ALL", adj_var = "yPEA", xlims = c(0, 800)) +
-    labs(x = "PEA-adjusted mean gap", y = "Proportion")
+    labs(x = "PEA-adjusted gap (All)", y = "Proportion\nof federations")
   p42 <- adj_histogram_plot(data, top = "MAX10", adj_var = "yPEA", xlims = c(0, 800)) +
-    labs(x = "PEA-adjusted top 10 gap", y = "Proportion")
+    labs(x = "PEA-adjusted gap (Top 10)", y = "Proportion\nof federations")
   p43 <- adj_histogram_plot(data, top = "MAX1", adj_var = "yPEA", xlims = c(0, 800)) +
-    labs(x = "PEA-adjusted top 1 gap", y = "Proportion")
+    labs(x = "PEA-adjusted Top 1 gap", y = "Proportion\nof federations")
 
   layout <- "
   ABC
