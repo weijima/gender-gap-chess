@@ -33,13 +33,12 @@ chess <- fread("data/rating-data.csv")  |>
 
 raw_data_w_juniors_no_inactive_worldwide <- chess |>
   filter(active)
-raw_data_w_juniors_w_inactive_worldwide <- chess |>
-  filter(age > 18)
+raw_data_w_juniors_w_inactive_worldwide <- chess
 raw_data_no_juniors_no_inactive_worldwide <- chess %>%
-  filter(age > 18,
+  filter(born >= 2000,
          active)
 raw_data_no_juniors_w_inactive_worldwide <- chess %>%
-  filter(age > 18)
+  filter(born >= 2000)
 
 # results from Richard
 data_w_juniors_no_inactive <- fread("data/nulls-Richard/nulls-J1-I0.csv")
@@ -47,7 +46,7 @@ data_w_juniors_w_inactive <- fread("data/nulls-Richard/nulls-J1-I1.csv")
 data_no_juniors_no_inactive <- fread("data/nulls-Richard/nulls-J0-I0.csv")
 data_no_juniors_w_inactive <- fread("data/nulls-Richard/nulls-J0-I1.csv")
 
-results <- fread("data/null-stats.csv")
+# results <- fread("data/null-stats.csv")
 
 # federations to include
 feds <- data_w_juniors_no_inactive |>
@@ -428,7 +427,8 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
 age_experience_data <- fread("data/age-experience-tab.csv")
 age_exp_w_juniors_no_ina <- age_experience_data |>
   filter(floor == 1000,
-         juniors) |>
+         juniors,
+         !inactives) |>
   select(FED = fed, yPEA, group = metric) |>
   mutate(group = case_match(
     group,
