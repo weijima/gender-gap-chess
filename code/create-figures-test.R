@@ -53,16 +53,16 @@ create_histogram <- function(data, bwidth = 100) {
 
 
 create_histogram(ratings(rating_data, "juniors", "no_inactives"))
-#ggsave(file = "figures/fig_1_w_jun_no_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_w_jun_no_ina.pdf", width = 3.7, height = 2)
 
 create_histogram(ratings(rating_data, "juniors", "inactives"))
-#ggsave(file = "figures/fig_1_w_jun_w_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_w_jun_w_ina.pdf", width = 3.7, height = 2)
 
 create_histogram(ratings(rating_data, "no_juniors", "no_inactives"))
-#ggsave(file = "figures/fig_1_no_jun_no_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_no_jun_no_ina.pdf", width = 3.7, height = 2)
 
 create_histogram(ratings(rating_data, "no_juniors", "inactives"))
-#ggsave(file = "figures/fig_1_no_jun_w_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_no_jun_w_ina.pdf", width = 3.7, height = 2)
 
 
 
