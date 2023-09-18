@@ -45,7 +45,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
     metric == "top10" ~ "Top 10",
     metric == "top1" ~ "Top 1"
   )) %>%
-  mutate(metric = fct_relevel(metric, "Top 1", "Top 10")) %>%
+  mutate(metric = fct_relevel(metric, "All", "Top 10")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
