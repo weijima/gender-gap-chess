@@ -108,8 +108,10 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
-  pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
+  summarise(across(starts_with("y"), function(x) round(mean(x), 2)),
+            .by = c(filter, floor, metric)) %>%
   mutate(floor = as_factor(floor)) %>%
+  pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
   mutate(response = case_match(
     response,
     "y" ~ "Unadjusted",
@@ -117,13 +119,15 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
     "yPEA" ~ "PEA-adjusted"
   )) %>%
   mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
-  group_by(filter, floor, metric, response) %>%
-  summarise(gap = round(mean(gap), 2)) %>%
-  ungroup() %>%
-  ggplot(aes(x = floor, y = filter, label = gap)) +
-  geom_text() +
+  arrange(metric, response, floor, filter) %>%
+  mutate(gap = gap / first(gap), .by = c(metric)) %>%
+  mutate(filter = fct_rev(filter)) %>%
+  ggplot(aes(x = floor, y = filter, fill = gap,
+             label = scales::percent(gap, accuracy = 1))) +
+  geom_label() +
   labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
   facet_grid(metric ~ response, switch = "y") +
+  scale_fill_gradient(low = "white", high = "grey60") +
   theme_minimal(base_size = 14) +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
