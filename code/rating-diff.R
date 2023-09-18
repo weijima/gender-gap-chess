@@ -50,16 +50,16 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
-  mutate(signif = ifelse(response == "yP", signif, "")) %>%
-  mutate(signif = fct_relevel(signif, "", "Significant")) %>%
+  mutate(signif = ifelse(response == "yP", signif, strrep(" ", 55))) %>%
+  mutate(signif = fct_relevel(signif, strrep(" ", 55), "Significant")) %>%
   mutate(floor = as_factor(floor)) %>%
   mutate(response = case_match(
     response,
-    "y" ~ "Unadjusted",
-    "yP" ~ "Participation-adjusted",
-    "yPEA" ~ "PEA-adjusted"
+    "y" ~ "Unadjusted\n",
+    "yP" ~ "Participation-adjusted\n",
+    "yPEA" ~ "PEA-adjusted\n"
   )) %>%
-  mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
+  mutate(response = fct_relevel(response, "Unadjusted\n","Participation-adjusted\n")) %>%
   ggplot() +
   geom_boxplot(aes(x = floor, y = gap, fill = filter), outlier.shape = NA) +
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
@@ -83,9 +83,51 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
         panel.border = element_blank(),
         panel.background = element_blank(),
         strip.placement = "outside",
-        legend.position = "bottom",
+        legend.position = c(0.5, 0.735),
         legend.box = "vertical",
         legend.direction = "vertical",
-        legend.spacing.y = unit(0, "lines"),
-        legend.margin = margin(0, 0, 0, 0))
+        legend.spacing.y = unit(18.6, "lines"),
+        legend.margin = margin(0, 0, 0, 0),
+        plot.margin = unit(c(0.1, 0.1, 1.3, 0.1), "cm"))
 #ggsave("figures/fig_4.pdf", width = 10, height = 8.57)
+
+
+read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+  filter(fed != "ALL", stat == "obs") %>%
+  rename(y = value) %>%
+  left_join(read_csv("data/age-experience-tab.csv", show_col_types = FALSE),
+            by = join_by(metric, juniors, inactives, floor, fed)) %>%
+  select(-c(stat, E, A, weight)) %>%
+  filter(metric %in% c("mean", "top1", "top10")) %>%
+  mutate(metric = case_when(
+    metric == "mean" ~ "Mean gap (All)",
+    metric == "top10" ~ "Mean gap (Top 10)",
+    metric == "top1" ~ "Gap (Top 1)"
+  )) %>%
+  mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
+  mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
+  mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
+  pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
+  mutate(floor = as_factor(floor)) %>%
+  mutate(response = case_match(
+    response,
+    "y" ~ "Unadjusted",
+    "yP" ~ "Participation-adjusted",
+    "yPEA" ~ "PEA-adjusted"
+  )) %>%
+  mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
+  group_by(filter, floor, metric, response) %>%
+  summarise(gap = round(mean(gap), 2)) %>%
+  ungroup() %>%
+  ggplot(aes(x = floor, y = filter, label = gap)) +
+  geom_text() +
+  labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
+  facet_grid(metric ~ response, switch = "y") +
+  theme_minimal(base_size = 14) +
+  theme(axis.line = element_line(colour = "grey80"),
+        axis.ticks = element_line(colour = "grey80"),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        strip.placement = "outside")
