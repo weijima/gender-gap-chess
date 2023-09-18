@@ -41,17 +41,17 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   filter(method == "fdr") %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
   mutate(metric = case_when(
-    metric == "mean" ~ "All",
-    metric == "top10" ~ "Top 10",
-    metric == "top1" ~ "Top 1"
+    metric == "mean" ~ "Mean gap (All)",
+    metric == "top10" ~ "Mean gap (Top 10)",
+    metric == "top1" ~ "Gap (Top 1)"
   )) %>%
-  mutate(metric = fct_relevel(metric, "All", "Top 10")) %>%
+  mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
-  mutate(signif = ifelse(response == "yP", signif, "Federation")) %>%
-  mutate(signif = fct_relevel(signif, "Federation", "Significant")) %>%
+  mutate(signif = ifelse(response == "yP", signif, "")) %>%
+  mutate(signif = fct_relevel(signif, "", "Significant")) %>%
   mutate(floor = as_factor(floor)) %>%
   mutate(response = case_match(
     response,
@@ -65,23 +65,24 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_jitterdodge(jitter.width = 0.06, seed = 54321)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
-  labs(x = "Rating floor", y = "Rating gap (men - women)") +
-  facet_grid(metric ~ response, scale = "free_y") +
+  labs(x = "Rating floor", y = "Mean rating gap (men - women)") +
+  facet_grid(metric ~ response, scale = "free_y", switch = "y") +
+  scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   scale_colour_manual(name = "",
                       values = rev(c("steelblue","forestgreen","goldenrod","plum3"))) +
   scale_fill_manual(name = "", values = rep("white", 4)) +
   scale_alpha_manual(name = "", values = c(0.7, 1, 0.2)) +
-  scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
-  guides(colour = guide_legend(nrow = 1, order = 1, override.aes = list(alpha = 1)),
-         fill = guide_legend(nrow = 1, order = 1),
-         alpha = guide_legend(nrow = 1, order = 2,
-                              override.aes = list(shape = c(1, 19, 19)))) +
+  guides(alpha = guide_legend(nrow = 1, order = 1,
+                              override.aes = list(shape = c(NA, 19, 19))),
+         colour = guide_legend(nrow = 1, order = 2, override.aes = list(alpha = 1)),
+         fill = guide_legend(nrow = 1, order = 2)) +
   theme_minimal(base_size = 14) +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
         panel.grid = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
+        strip.placement = "outside",
         legend.position = "bottom",
         legend.box = "vertical",
         legend.direction = "vertical",

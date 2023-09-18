@@ -104,7 +104,19 @@ null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
 # Perform weighted regression, with a given set of parameters:
 analyze_age_experience(rating_data, null_data, min_rating = 1000, min_players = 30,
                        include_junior = TRUE, include_inactive = FALSE,
-                       birth_uncertain = FALSE)
+                       birth_uncertain = FALSE) %>%
+  select(-r.squared) %>%
+  mutate(term = ifelse(term == "(Intercept)", "Intercept", term)) %>%
+  mutate(metric = case_when(
+    metric == "mean" ~ "Mean gap (All)",
+    metric == "top10" ~ "Mean gap (Top 10)",
+    metric == "top1" ~ "Gap (Top 1)",
+    .default = NA
+  )) %>%
+  pivot_wider(names_from = term, values_from = c(estimate, std.error, p.value),
+              names_sep = " ") %>%
+  relocate(metric, contains(" Intercept"), contains(" E"), contains(" A")) %>%
+  knitr::kable(format = "latex")
 
 # Table of coefficients, weights, and regression results for all parameter combinations:
 crossing(fun = list(mean = mean, top10 = top10, top1 = top1),

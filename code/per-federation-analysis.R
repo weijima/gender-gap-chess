@@ -14,7 +14,7 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
     s == 2 ~ "female-slanted",
     s == 1 ~ "male-slanted",
     s == 0 ~ "nonsignificant",
-    .default = "ERROR - BOTH MALES AND FEMALES ARE SIGNIFICANT"
+    .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
   )
 }
 
