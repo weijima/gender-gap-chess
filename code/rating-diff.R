@@ -122,16 +122,18 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   arrange(metric, response, floor, filter) %>%
   mutate(gap = gap / first(gap), .by = c(metric)) %>%
   mutate(filter = fct_rev(filter)) %>%
-  ggplot(aes(x = floor, y = filter, fill = gap,
-             label = scales::percent(gap, accuracy = 1))) +
-  geom_label() +
+  ggplot() +
+  geom_label(aes(x = floor, y = filter, fill = gap,
+                 label = scales::percent(gap, accuracy = 1))) +
   labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
   facet_grid(metric ~ response, switch = "y") +
-  scale_fill_gradient(low = "white", high = "grey60") +
+  scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
+                      breaks = c(0.5, 1), name = "fraction of original gap ") +
   theme_minimal(base_size = 14) +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
         panel.grid = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
+        legend.position = "bottom",
         strip.placement = "outside")
