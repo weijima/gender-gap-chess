@@ -49,7 +49,7 @@ create_histogram <- function(data, bwidth = 100) {
     facet_wrap(~ sex) +
     scale_x_continuous(limits = c(1000, 2900)) +
     labs(y = "Proportion", x = "Rating") +
-    theme(axis.title = element_text(size = rel(0.8)))
+    theme(axis.title = element_text(size = rel(0.95)))
 }
 
 w <- 5.4
