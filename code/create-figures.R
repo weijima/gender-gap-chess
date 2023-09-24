@@ -84,7 +84,8 @@ create_histogram <- function(data, bwidth = 100) {
     labs(y = "Proportion\nof federations", x = "Rating")
 
   hist_all <- hist_F + hist_M +
-    theme(axis.title.y = element_blank())
+    theme(axis.title.y = element_blank(),
+          axis.title.x = element_text(size = rel(0.7)))
 
   return(hist_all)
 }
@@ -191,6 +192,8 @@ get_lims <- function(plot_data, factor = 100) {
   return(lims)
 }
 
+scale_font_size <- 0.7
+
 scatter_plot <- function(data, top = "ALL",
                          lims = NULL) {
   plot_data <- data |>
@@ -213,7 +216,8 @@ scatter_plot <- function(data, top = "ALL",
                 linetype = "dashed", color = "grey40") +
     coord_cartesian(xlim = lims, ylim = lims) +
     theme(legend.position = "none") +
-    scale_color_manual(values = c("black", "tomato3"))
+    scale_color_manual(values = c("black", "tomato3")) +
+    theme(axis.title = element_text(size = rel(scale_font_size)))
 }
 
 histogram_plot <- function(data, top, xlims = NULL) {
@@ -226,7 +230,8 @@ histogram_plot <- function(data, top, xlims = NULL) {
     geom_vline(xintercept = 0, linetype = "dashed") +
     expand_limits(y = c(0, 0.3), x = xlims) +
     geom_point(aes(x = mean(OBS_diff), y = -0.014), shape = 17, size = rel(1)) +
-    scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3))
+    scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3)) +
+    theme(axis.title = element_text(size = rel(scale_font_size)))
 
   # expand_limits(y = c(0, 0.12), x = xlims) +
   # scale_y_continuous(breaks = c(0, 0.03, 0.06, 0.09, 0.12))
@@ -236,22 +241,22 @@ histogram_plot <- function(data, top, xlims = NULL) {
 
 figure_2 <- function(data) {
   p11 <- scatter_plot(data, top = "ALL", lims = c(1200, 2900)) +
-    labs(y = "Mean rating W", x = "Mean rating M")
+    labs(y = "Mean rating W (All)", x = "Mean rating M (All)")
   p12 <- scatter_plot(data, top = "MAX10", lims = c(1200, 2900)) +
     labs(y = "Mean rating W (Top 10)", x = "Mean rating M (Top 10)")
   p13 <- scatter_plot(data, top = "MAX1", lims = c(1200, 2900)) +
-    labs(y = "Mean rating W (Top 1)", x = "Mean rating M (Top 1)")
+    labs(y = "Rating W (Top 1)", x = "Rating M (Top 1)")
   p14 <- scatter_plot(data, top = "SD") +
     labs(y = "SD rating W", x = "SD rating M")
 
   p21 <- histogram_plot(data, top = "ALL", xlims = c(0, 800)) +
-    labs(x = "Unadjusted gap (All)", y = "Proportion\nof federations")
+    labs(x = "Unadjusted mean gap (All)", y = "Proportion\nof federations")
   p22 <- histogram_plot(data, top = "MAX10", xlims = c(0, 800)) +
     labs(x = "Unadjusted mean gap (Top 10)", y = "Proportion\nof federations")
   p23 <- histogram_plot(data, top = "MAX1", xlims = c(0, 800)) +
-    labs(x = "Unadjusted mean gap (Top 1)", y = "Proportion\nof federations")
+    labs(x = "Unadjusted gap (Top 1)", y = "Proportion\nof federations")
   p24 <- histogram_plot(data, top = "SD", xlims = c(0, 200)) +
-    labs(x = "SD difference (men - women)", y = "Proportion\nof federations")
+    labs(x = "SD difference", y = "Proportion\nof federations")
 
   # layout <- "
   # ACEG
@@ -274,34 +279,36 @@ figure_2 <- function(data) {
     theme(legend.title = element_markdown())
 }
 
+w <- 4.3
+h <- 7
 
 fig2 <- reformat_results_data(data_w_juniors_no_inactive,
                               raw_data_w_juniors_no_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_w_jun_no_ina.png",
-       width = 8, height = 7)
+       width = w, height = h)
 
 fig2 <- reformat_results_data(data_w_juniors_w_inactive,
                               raw_data_w_juniors_w_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_w_jun_w_ina.png",
-       width = 8, height = 7)
+       width = w, height = h)
 
 fig2 <- reformat_results_data(data_no_juniors_no_inactive,
                               raw_data_no_juniors_no_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_no_jun_no_ina.png",
-       width = 8, height = 7)
+       width = w, height = h)
 
 fig2 <- reformat_results_data(data_no_juniors_w_inactive,
                               raw_data_no_juniors_w_inactive_worldwide,
                               feds) |>
   figure_2()
 ggsave(plot = fig2, file = "figures/fig_2_no_jun_w_ina.png",
-       width = 8, height = 7)
+       width = w, height = h)
 
 
 

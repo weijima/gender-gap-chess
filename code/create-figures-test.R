@@ -48,21 +48,23 @@ create_histogram <- function(data, bwidth = 100) {
                    colour = "white", binwidth = bwidth) +
     facet_wrap(~ sex) +
     scale_x_continuous(limits = c(1000, 2900)) +
-    labs(y = "Proportion\nof federations", x = "Rating")
+    labs(y = "Proportion", x = "Rating") +
+    theme(axis.title = element_text(size = rel(0.8)))
 }
 
-
+w <- 5.4
+h <- 3
 create_histogram(ratings(rating_data, "juniors", "no_inactives"))
-ggsave(file = "figures/fig_1_w_jun_no_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_w_jun_no_ina.pdf", width = w, height = h)
 
 create_histogram(ratings(rating_data, "juniors", "inactives"))
-ggsave(file = "figures/fig_1_w_jun_w_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_w_jun_w_ina.pdf", width = w, height = h)
 
 create_histogram(ratings(rating_data, "no_juniors", "no_inactives"))
-ggsave(file = "figures/fig_1_no_jun_no_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_no_jun_no_ina.pdf", width = w, height = h)
 
 create_histogram(ratings(rating_data, "no_juniors", "inactives"))
-ggsave(file = "figures/fig_1_no_jun_w_ina.pdf", width = 3.7, height = 2)
+ggsave(file = "figures/fig_1_no_jun_w_ina.pdf", width = w, height = h)
 
 
 
