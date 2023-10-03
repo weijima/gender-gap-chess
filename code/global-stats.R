@@ -1,5 +1,7 @@
 library(tidyverse)
 
+top10 <- function(x) mean(tail(sort(x), 10))
+
 participation_gap <- function(rating_data) {
   rating_data %>%
     count(fed, sex, name = "no_of_players") %>%
@@ -131,7 +133,99 @@ global_data %>%
 null_data %>%
   filter(fed != "ALL") %>%
   filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "median", stat == "obs") %>%
+  count(`higher female median` = value < 0)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
   filter(metric == "median", stat == "ptpval") %>%
   # pull(value) %>% p.adjust(method = "fdr") %>% ks.test("punif")
   mutate(sig = p_anal(value, method = "none")) %>%
+  #filter(sig == "nonsignificant")
   count(sig)
+
+
+# SD:
+global_data %>%
+  mutate(sd_M = map_dbl(male, sd), sd_F = map_dbl(female, sd))
+null_data %>%
+  filter(fed == "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "sd", stat == "ptpval")
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "sd", stat == "obs") %>%
+  count(`female higher` = value < 0)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "sd", stat == "ptpval") %>%
+  mutate(sig = p_anal(value, method = "fdr")) %>%
+  count(sig)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "sd", stat == "ptpval") %>%
+  pull(value) %>%
+  p.adjust(method = "fdr") %>%
+  ks.test("punif")
+
+
+# Top1:
+global_data %>%
+  mutate(sd_M = map_dbl(male, max), sd_F = map_dbl(female, max))
+null_data %>%
+  filter(fed == "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top1")
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top1", stat == "obs") %>%
+  count(`female higher` = value < 0)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top1", stat == "obs") %>%
+  filter(value < 0)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top1", stat == "ptpval") %>%
+  mutate(sig = p_anal(value, method = "fdr")) %>%
+  count(sig)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top1", stat == "ptpval") %>%
+  pull(value) %>%
+  p.adjust(method = "fdr") %>%
+  ks.test("punif")
+
+
+# Top10:
+global_data %>%
+  mutate(sd_M = map_dbl(male, top10), sd_F = map_dbl(female, top10))
+null_data %>%
+  filter(fed == "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top10")
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top10", stat == "obs") %>%
+  count(`female higher` = value < 0)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top10", stat == "ptpval") %>%
+  mutate(sig = p_anal(value, method = "fdr")) %>%
+  count(sig)
+null_data %>%
+  filter(fed != "ALL") %>%
+  filter(juniors, !inactives, floor == 1000) %>%
+  filter(metric == "top10", stat == "ptpval") %>%
+  pull(value) %>%
+  p.adjust(method = "fdr") %>%
+  ks.test("punif")
