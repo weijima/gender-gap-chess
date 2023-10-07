@@ -15,8 +15,9 @@ global_data <- crossing(juniors = c(TRUE, FALSE),
                         inactives = c(TRUE, FALSE),
                         floor = c(1000, 1400, 1600)) %>%
   mutate(dat = pmap(., restrict_data, rating_data = rating_data)) %>%
+  mutate(label = c("J","K","L","G","H","I","D","E","F","A","B","C")) %>%
   unnest(dat) %>%
-  select(juniors, inactives, floor, sex, rating)
+  select(juniors, inactives, floor, sex, rating, label)
 
 global_data %>%
   mutate(juniors = ifelse(juniors, "With juniors, ", "No juniors, ")) %>%
@@ -27,11 +28,14 @@ global_data %>%
                               "No juniors, with inactives")) %>%
   select(-juniors, -inactives) %>%
   mutate(sex = ifelse(sex == "F", "Women", "Men")) %>%
-  mutate(floor = str_c("Rating floor: ", floor)) %>%
-  ggplot(aes(x = rating, y = after_stat(density), colour = sex, fill = sex)) +
-  geom_area(alpha = 0.15, stat = "bin", binwidth = 100, position = "identity") +
+  mutate(floor_txt = str_c("Rating floor: ", floor)) %>%
+  ggplot() +
+  geom_area(aes(x = rating, y = after_stat(density), colour = sex, fill = sex),
+            alpha = 0.15, stat = "bin", binwidth = 100, position = "identity") +
+  geom_text(data = . %>% select(filter, floor_txt, floor, label) %>% distinct(),
+            aes(label = label, x = floor), y = 0.002) +
   labs(x = "Rating", y = "Proportion") +
-  facet_grid(filter ~ floor, scales = "free", switch = "y") +
+  facet_grid(filter ~ floor_txt, scales = "free_x", switch = "y") +
   scale_colour_manual(values = c("goldenrod", "steelblue")) +
   scale_fill_manual(values = c("goldenrod", "steelblue")) +
   scale_x_continuous(limits = c(NA, 2900)) +
@@ -44,8 +48,8 @@ global_data %>%
         legend.title = element_blank(),
         legend.position = c(0.93, 0.44),
         strip.placement = "outside")
-#ggsave("figures/global-fig.pdf", width = 8, height = 7)
+#ggsave("figures/global-fig.pdf", width = 7, height = 7)
 
 read_csv("data/global-stat-data.csv", col_types = "llidcddddd") %>%
-  select(-MW_estimate, -contains("statistic")) %>%
+  select(-contains("statistic"), -contains("conf")) %>%
   filter(KS_p.value >= 2.3e-9)
