@@ -1,0 +1,467 @@
+%The striking thing here is that in column 2, the one in which we exclude both juniors and inactive players, the number of federations for which we reject the PRH is much smaller --- still large enough to say we can't accept the PRH overall, but there are a significant number of federations where we DO accept the PRH, such as India. This is where we started our whole project, with Weiji's comment in Chessbase on October 2020!. I still think this is worth giving some emphasis, though it does not appear to be robust to changing the data filter. 
+
+
+
+\vskip0.2in
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+&\multicolumn{4}{|c|}{Intercept}&\multicolumn{4}{|c|}{Slope}\\
+Players & Estimate & S.E. & t-stat & p-val & Estimate & S.E. & t-stat & p-val \\
+\hline
+All & 149.48&11.753&12.718&0&3.283&1.503&2.185&0.032\\
+Top 10 & 145.035&10.206&14.211&0&7.338&1.492&4.919&0\\
+Top 1 & 191.414&14.041&13.633&0&2.242&0.961&2.332&0.022\\
+\hline
+\end{tabular}
+\newline\vskip0.1in\noindent
+\textbf{Supplementary Table 4: Intercepts and Slopes for the straight lines in Figure 4. Also shown are the standard errors, $t$ statistics and p-values determined by weighted least squares.}
+
+\vskip0.2in
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+&\multicolumn{4}{|c|}{Intercept}&\multicolumn{4}{|c|}{Slope}\\
+Players & Estimate & S.E. & t-stat & p-val & Estimate & S.E. & t-stat & p-val \\
+\hline
+All & 146.786&18.661&7.866&0&-10.904&2.532&-4.307&0\\
+Top 10 & 79.716&14.132&5.641&0&3.416&2.705&1.263&0.213\\
+Top 1 & 133.025&13.588&9.79&0&-0.189&1.118&-0.169&0.866\\
+\hline
+\end{tabular}
+\newline\vskip0.1in\noindent
+\textbf{Supplementary Table 5: Intercepts and Slopes for the straight lines in Figure 5.}
+
+\vskip0.2in
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+&\multicolumn{4}{|c|}{Intercept}&\multicolumn{4}{|c|}{Slope}\\
+Players & Estimate & S.E. & t-stat & p-val & Estimate & S.E. & t-stat & p-val \\
+\hline
+All & 173.344&13.886&12.483&0&-5.986&1.909&-3.135&0.002\\
+Top 10 & 145.199&9.399&15.449&0&2.639&1.532&1.722&0.089\\
+Top 1 & 163.553&11.766&13.9&0&0.194&0.714&0.272&0.786\\
+\hline
+\end{tabular}
+\newline\vskip0.1in\noindent
+\textbf{Supplementary Table 6: Intercepts and Slopes for the straight lines in Figure 6.}
+
+\vskip0.2in
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+&\multicolumn{4}{|c|}{Intercept}&\multicolumn{4}{|c|}{Slope}\\
+Players & Estimate & S.E. & t-stat & p-val & Estimate & S.E. & t-stat & p-val \\
+\hline
+All & 125.85&9.485&13.268&0&4.347&1.25&3.478&0.001\\
+Top 10 & 161.452&7.197&22.433&0&3.692&1.005&3.675&0\\
+Top 1 & 208.408&10.94&19.051&0&0.866&0.663&1.307&0.195\\
+\hline
+\end{tabular}
+\newline\vskip0.1in\noindent
+\textbf{Supplementary Table 7: Intercepts and Slopes for the straight lines in Figure 7.}
+
+
+\begin{figure*}
+    \centering
+\includegraphics[width = \linewidth]{fig/fig_4_w_jun_no_ina.png}
+    \caption{Version of Fig. 4 in the main text with inactive players and juniors excluded. (A-C) Age comparisons between men and women players. (A) Overall mean. (B) Mean of top 10 players. (C) Top 1 player. (D-F) Effects of age difference on adjusted rating difference by federation. {\bf TO DO: equalize x- and y-axes across all plots in top row; make diagonal dashed; maybe make axes the same across three plots in bottom row; change lay-out to same as previous figures.}}
+\end{figure*}
+\vskip 0.2in
+
+\begin{figure*}
+    \centering
+\includegraphics[width = \linewidth]{fig/fig_4_w_jun_no_ina.png}
+    \caption{Version of Fig. 4 in the main text with inactive players included and juniors excluded. (A-C) Age comparisons between men and women players. (A) Overall mean. (B) Mean of top 10 players. (C) Top 1 player. (D-F) Effects of age difference on adjusted rating difference by federation. {\bf TO DO: equalize x- and y-axes across all plots in top row; make diagonal dashed; maybe make axes the same across three plots in bottom row; change lay-out to same as previous figures.}}
+\end{figure*}
+\vskip 0.2in
+
+\begin{figure*}
+    \centering
+\includegraphics[width = \linewidth]{fig/fig_4_w_jun_no_ina.png}
+    \caption{Version of Fig. 4 in the main text with juniors as well as inactive players included. (A-C) Age comparisons between men and women players. (A) Overall mean. (B) Mean of top 10 players. (C) Top 1 player. (D-F) Effects of age difference on adjusted rating difference by federation. {\bf TO DO: equalize x- and y-axes across all plots in top row; make diagonal dashed; maybe make axes the same across three plots in bottom row; change lay-out to same as previous figures.}}
+\end{figure*}
+\vskip 0.2in
+
+
+
+Table \ref{table:robustness} shows the number of federations for which we reject the participation rate hypothesis (PRH), for each of the four main data constructions (with/without juniors, with/without inactive players) and for each of the five main statistics we are computing (i.e. for each of these statistics, compute the permutation test for the null hypothesis that the M/F difference is explained by the PRH, and report the number of federations for which that hypothesis is rejected. The numbers in parentheses are based on the modified calculation for which we apply the FDR correction to the p-values. 
+
+
+
+\begin{figure*}
+    \centering
+\includegraphics[width = \linewidth]{fig/fig_4_w_jun_no_ina.png}
+    \caption{(A-C) Age comparisons between men and women players. (A) Overall mean. (B) Mean of top 10 players. (C) Top 1 player. (D-F) Effects of age difference on adjusted rating difference by federation. {\bf TO DO: equalize x- and y-axes across all plots in top row; make diagonal dashed; maybe make axes the same across three plots in bottom row; change lay-out to same as previous figures.}}
+    \label{fig:mean}
+\end{figure*}
+
+difference in the top 10 ages.
+It can be seen that, indeed, the adjusted rating difference increases with the mean age difference, and the slope of the fitted least-squares 
+straight line is statistically significant at the 0.05 significance level. However, possibly of greater interest is the intercept, i.e. where the
+fitted straight line meets the vertical dashed line representing zero age difference, since that may be interpreted as an overall
+mean rating difference adjusted for both the participation rate difference and age. For this plot, the adjusted mean rating difference is
+149, and very highly significant. 
+
+Figures 4(d) and (f) show a similar pattern for the means over all players and for the top-1 female and male players in each federation, and Figures 5--7 (Supporting Information) show similar patterns for the comparison datasets where we apply different criteria with regard to inactive and junior
+players. Supplementary Tables 4--7 show the statistics (estimates of intercept and slope, together with standard errors, $t$ statistics
+and p-values) for each of the weighted least squares regression lines that predict the adjusted rating difference as a function of the age difference. In every case, the adjusted mean rating difference (represented by the intercept of the fitted straight line) is between 80 and 210, with an effective
+p-value of 0, i.e. overwhelmingly statistically significant.
+These plots and tables show convincingly that, when data from all federations are combined, discrepancies from the participation rate
+hypothesis \textit{cannot} be explained by age differences between the male and female players.
+
+%\subsection*{Role of women's participation}
+%We next hypothesized that the gender gap is smaller if the proportion of woman chess players in a federation is greater. The rationale is that these federations might provide a more welcoming environment for women to play competitive chess, therefore possibly alleviating the social and environmental factors that could affect a mean gap. We found a significant correlation between  with the overall mean rating difference ($r=-0.31$, $p=0.006$; Fig. \ref{fig:mean}B). A weighted least-squares regression, that takes account of the different variances and different numbers of players in each federation, confirms this result ($p=0.001$). \WJM{INSERT RESULTS OF top1 and top10}.
+
+
+%\subsection*{federation-level predictors (Richard, David)}
+%\DS{I have removed this section.}
+%\RLS{I haven't given up on this analysis but it requires more work and I'd propose putting it aside for the time being. We would definitely need to take some care explaining the differences between our results and Dilmaghani's but I still think there are some important points to be made.}
+%Human development index Gender equality index (UN, World Bank)
+%\DS{It is not clear to me whether this section fits with the paper, or what we would say. Specifically, what would we add to Dilmaghani 2020 Journal of Comparative Economics? She finds that any gender equality effect falls away when you control for the market structure of the economy (e.g. free market democracy, command-control etc.). We already refer to this in section 4. What's our contribution here?}
+
+Why would the result be different for this particular analysis? On this point I would have to defer to Yifan and David, but it seems to me that excluding both juniors and inactive players is having the effect that the analysis essentially focuses on players who were at their peak during the period 2000-2019 (earlier and they are most likely not still active; later than that and they were still juniors in 2019). And I'd like to argue, this period has been kind of a golden age for women's chess. The Polgars had a huge effect on the game, and I think you also have to say something about the large numbers of strong Chinese women with Yifan as the leader of course, but it really goes back to when Xie Jun became world champion in 1991. However, unfortunately, there are signs that this period is ending, e.g. we have a whole bunch of super-strong juniors such as Firouzja, Pragg, Gukesh, Mishra etc., but they are all boys! Where are the corresponding teenage girls? Maybe this is just a temporary fallback and the world is just waiting for another teenage Judit or Yifan to emerge, but right now, it seems to me they are not there (and of course, a few very visible players at the top influence players at all levels of the game).
+
+If you don't feel this sort of discussion is suitable for an academic paper or if you just disagree with what I'm saying, I'm totally fine to just omit this discussion altogether, but I do feel the way this paper has developed, we've moved away from our original objective, and I'd like to at least make a pitch that we go back to that!
+
+\color{red} End of RLS comment.}
+
+
+\DS{Removed the `three different gaps' classification to save space.}\iffalse We are interested in factors affecting  three different gaps:
+\begin{itemize}
+    \item The average gap between male and women (which is not affected by the participation gap)
+    \item The participation gap itself: why do fewer women play chess than men? These factors indirectly affect the top gap.
+    \item The residual top gap: the difference between top male and top women, when corrected for the participation gap. Factors affecting top players may not be the same as factors affecting the general population. Towards the end, we will specifically discuss potential factors affecting top players. 
+\end{itemize} \fi
+
+***
+
+\NB{As a general primer I find this post very interesting: https://slatestarcodex.com/2017/08/07/contra-grant-on-exaggerated-differences/ (especially the first comments where they respond to each others criticism after the text are worth a read. Some of the cited articles: Gendered Occupational Interests: Prenatal Androgen Effects on Psychological Orientation to Things Versus People (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166361/), Gender Differences in Personality and Interests: When,Where, and Why? (https://sci-hub.se/10.1111/j.1751-9004.2010.00320.x), Personality and gender differences in global perspective (https://onlinelibrary.wiley.com/doi/full/10.1002/ijop.12265), Sex differences in rhesus monkey toy preferences parallel those of children (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2583786/), Sex differences in chimpanzees' use of sticks as play objects resemble those of children (https://www.cell.com/current-biology/fulltext/S0960-9822(10)01449-1), Fetal Testosterone Predicts Sexually Differentiated Childhood Behavior in Girls and in Boys (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2778233/), Gender role across development in adult women with congenital adrenal hyperplasia due to 21-hydroxylase deficiency (https://pubmed.ncbi.nlm.nih.gov/15526714/), Prenatal phthalate exposure and reduced masculine play in boys (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2874619/)}
+***
+
+
+\DS{I HAVE UPDATED THE DISCUSSION UP TO HERE. I haven't edited anything of what follows; WEIJI: I think it's probably best if you and Yifan try to edit/cut/incorporate the following paragraphs as you think best fits the remainder of the Discussion. As I previously mentioned, I have some reservations about the text that follows, particularly given that there is a strong argument that females have higher financial incentives, relative to strength, than males, which we don't refute below. Likewise for `top' tournament invites if we are comparing F and M players of the same Elo.}
+
+\begin{itemize}
+    \item Do top women have a harder time making a living playing chess? 
+    \item Do top women have less access to tournaments that allow them to improve their rating?
+    \item Do top women have less access to top trainers, sponsors, or other resources arranged by the national federations?
+\end{itemize}
+
+
+
+{\bf Financial conditions.} 
+Monetary prizes in tournaments usually favor men. The difference is obvious. If the event is friendly to women or girls, then the top prize is typically about two times as low as in a male event in the same category. Examples can be found from official events with limited number of qualified players to Open tournaments that open to most of the people. FIDE Candidates Tournament, as the official event organized by World Chess federation, is the one to determine the challenger to play a match with the current Champion. In this event, the top prize for Men is 95,000 Euros and the total Prize Fund is 420,000 Euros. (\url{https://www.fide.com/FIDE/handbook/regscandidates2018.pdf }) While the Same event for Women, the first prize is 50,000 Euros and the total Prize Fund is 200,000 Euros. \url{https://www.fide.com/images/stories/NEWS_2018/FIDE_NEWS/Rules_for_the_FIDE_Womens_Candidates_Tournament_2019.pdf } Isle of Man International event, as one of the increasing popular Open Tournament, also have a huge prize gap between male and female chess players. Taking the year of 2018, the top prize in Open Section is 50,000 Pounds, while the top prize for Women was only 7,000 Pounds, which is roughly 7 times lower \url{https://gamesmaven.io/chessdailynews/news/husband-and-wife-duo-win-2018-isle-of-man-chess-7jb18YwLYUW3UFgGYO7MLg}. World Cup, is another proof to show the prize difference among gender. 2019 World Cup, the top prize is 110,000 US Dollars and the total prize is 1,600,000 USD \url{https://www.fide.com/FIDE/handbook/WorldCup2019Regulations.pdf
+}, while the 2018 Women’s World Chess Championship (the same format as World Cup) having the top prize of 60,000 USD and the total prize 450,000 USD \url{https://chess24.com/en/embed-tournament/fide-womens-ko-world-championship-2018}. Even if we consider the number of the participants (128 male participants, 64 female participants) and divided the total prize of World Cup, the difference is still around two times. 
+Apart from the Prizes, the earnings also vary in starting fees. Another major type of the chess tournaments called ‘invitational’, which means the organizer has the power to decide the participation list and the starting fees the player will receive. This type of the tournament usually provides players ‘starting fees’ to attract top players, some may have prizes for the top places but some are ‘appearance-fee only’. Therefore, the starting fees is the main part among one’s earning, and the situation also favors men. A [possible] survey conducted to ask the organizers about their inviting conditions for top men and women shows that…… [top few players, and top female, the gap and willingness to invite.]
+
+It is also worth to mention that most of the invitational tournaments were only open to men, only the best women player may get invited time to time participating for few invitational events. Due to the rare opportunities and the unbalanced amount of the starting fees, the potential income of the women is hard to compare with the men who ranked at the same place.
+The other major difference on earnings with difference gender is the business opportunities, in which the top men are more likely to get a commercial contract, that comes with general recognition and income from advertisements. For example, Magnus Carlsen had cooperated with G-Star, Hikaru Nakamura had the contract with Red Bull and recently signed by TSM. However, those well-known brands do not have any direct cooperation with top women.
+
+The above three dimensions are the main resources of the player’s income, and the obvious unbalance causing the women more difficulties to make a living through playing chess.
+
+{\bf Entries to top-level tournaments.}
+From 2010-2020, there were (how many?) tournaments category above [19?], and only (?) of them had female chess players.
+For invitational chess tournaments, usually the organizer needs the support from the sponsors, then the minimum category may be the obstacle to hinder the invitation to female chess players due to their ratings.
+For the events organized by FIDE, there is a qualification system.
+
+{\bf Technical support.} (didn’t update) Gender differences in technical support are a consequence of differences in financial conditions. Because male and women are treated differently financially, it is difficult to maintain the same training environment. If a player is building a team by themselves, then they need to ensure that the earnings cover the cost. In the market, the rate that trainers/coaches charge could vary, therefore in case to .. (?) If a player comes from a planned economy, then sometimes they can get support from the government. However, this support typically also goes disproportionally to men. In this aspect, China was an exception between the 1980s and 2005, as the national team asked men to help women. However, this benefit has disappeared since, as the general performance of men increased.
+Survey in European chess (Alice O'Gorman): \url{https://www.europechess.org/wp-content/uploads/2020/04/Equality-}
+
+
+For next meeting  (Jul 2):
+No-guilt policy!
+\begin{itemize}
+\item Richard: continue talking to Chessbase about experience data
+\item Jose: Tables 1-3 based on Dec 31, 2019 data
+\item Richard: Knapp analysis
+\item Weiji: continue cleaning up storyline
+\item Yifan: writing about personal experience 
+\end{itemize}
+Other stuff (Oct 1):
+\begin{itemize}
+    \item FIDE definitions: Verify definition of active and junior players (for our Methods section). History of rules for FIDE rating eligibility
+    % \item Median M/F gap vs percentage of women (Nikos) Similar to Fig 2 but with flipped axes.
+    %\item Include mean and median plot with federations as random effects (without any permutation tests) (Nikos)
+    % \item Include percentage of women in Table 7 (Nikos) first federation-level table, the one with raw data in the Appendix. Also round stuff that is currently not rounded. 
+    \item Read Dilmaghani paper (Yifan, me)
+\item Age and experience correction for mean (Richard, Nikos)
+\item (David and Richard) Economic indicators. Correlating top gap (corrected for participation rate, maybe as z-scored) with national characteristics (Richard)
+    \item Robustness checks: looser inclusion,  (Jose) has to be redone
+    \item Kolmogorov Smirnov test on p-values from permutation tests (Jose) has to be redone
+    \item Read and cite a few papers on the male variability hypothesis (not super central for us so lower priority)
+    \item Summarizing relevant psychology literature (Weiji). Separate participation from performance; within performance, it could be a difference in ability vs motivation vs social factors. And those differences could be biological or based on (self-)selection or environmental.
+    \item Are women more synthetic and men more analytical thinkers? Are women less monomaniacally focused?
+\end{itemize}
+
+
+
+
+
+
+
+
+
+\section*{Other analyses}
+\subsection*{Do weaker women disproportionately drop out?} \cite{chabris2006sex}
+
+\section*{Factors contributing to the remaining gender gaps (Yifan, David, Weiji)}
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.3]{fig/factor_organization.png}
+    \caption{Factors potentially contributing to rating gaps in chess}
+    \label{fig:factor_organization}
+\end{figure}
+\begin{table*}[h!]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        Factor &  Evidence outside chess & Evidence in chess & Effect on behavior & Effect on ratings\\
+        \hline
+        Stereotype threat & (many) &  
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:my_label}
+\end{table*}
+
+
+
+So far, we also established that using the observed top 1 (or top 10) gap as a metric would overestimate the difference between men and women, as it does not take into account the participation gap.  That being said, after properly correcting for the gap, and also when considering mean and median ratings, we found that in most federations, as well as overall, women's FIDE ratings are substantially lower than men's. 
+
+What could explain these remaining gaps? High-profile chess players have publicly attributed differences in playing strength to biological, and in particular innate differences. For example, then-World Champion Garry Kasparov said in 1989, ``Chess is the combination of sport, art and science. In all these fields, you can see men’s superiority. Just compare the sexes in literature, in music or in art. The result is, you know, obvious. Probably the answer is in the genes." British GM Nigel Short said as recently as 2015 that men are ``hardwired" to be better chess players than women. Anecdotally, the authors of this article have observed widespread emphasis on biological differences in public discourse on chess, for example on web forums. 
+
+Such lay theories are often based on some form of top gap between men and women, but rarely consider other factors -- especially not the most obvious one, the participation gap. Here, we will try to delineate the multitutde of factors that could account for the remaining gap. Dissecting their contributions is beyond the scope of this paper, so we consider this primarily a review and road map for future work.
+
+We are interested in factors affecting  three different gaps:
+\begin{itemize}
+    \item The average gap between male and women (which is not affected by the participation gap)
+    \item The participation gap itself: why do fewer women play chess than men? These factors indirectly affect the top gap.
+    \item The residual top gap: the difference between top male and top women, when corrected for the participation gap. Factors affecting top players may not be the same as factors affecting the general population. Towards the end, we will specifically discuss potential factors affecting top players. 
+\end{itemize}
+The potential factors contributing to these gaps partly overlap. For example, factors that drive women and girls out can also affect their performance if they do continue to play chess.
+
+%% TO EXPLAIN: GENDER GAPS IN CHESS PERFORMANCE
+% - Participation gap itself
+% - Residual top gap
+% - Average gap in chess performance
+
+%% POSSIBLE MEDIATING GENDER DIFFERENCES - EACH OF THESE COULD HAVE A BIOLOGICAL COMPONENT
+% Gender differences in spatial cognition
+% Gender differences in risk aversion and confidence
+% Gender differences in competitiveness
+% Gender differences in interest/preferences
+% Gender differences in pressure/anxiety during play
+% Gender differences in endurance
+
+%% POSSIBLE SOCIAL/ENVIRONMENTAL FACTORS
+% Home environment during childhood: Parental biases
+% Chess community environment: Field-specific ability beliefs
+% Chess community environment: Hostile environment
+% Chess community environment: Stereotype threat
+% Societal environment: Political system
+% Societal environment: differences in prize money/national policies towards top players
+% Home and societal environment: Family and child-rearing
+
+
+\subsection*{Differences in spatial cognition}
+A common argument for biological differences in chess ability is that chess involves visual-spatial thinking, and that men are innately better at that than women. Indeed, men tend to be better than women at visuospatial tasks \cite{kimura1999sex, terlecki2005important, voyer1995magnitude}, such as spatial attention and mental rotation.  Since chess ability relies heavily on spatial cognition, in particular pattern recognition and mental simulation (De Groot, Chase and Simon, Gobet), it is possible that gender differences in spatial cognition translate to gender differences in chess ability (reference?). 
+
+
+Differences in spatial cognition are not necessarily innate, though. A meta-analysis of gender differences in spatial cognition, in particular mental rotation, found that the magnitude of the advantage depends on age and that there might be no male advantage in early childhood \cite{lauer2019development}, thus challenging earlier claims that spatial cognition differences are innate. A possible contributor to the growing difference is the language that parents use in early childhood: parents speak to boys using more spatial terms than to girls (cite). 
+
+ In addition, the gender gap in spatial attention and mental rotation can be reduced by practicing action video games \cite{feng2007playing}, suggesting that experience plays an important role in the gap. In conclusion, it is by no means settled that men are {\it innately} better than women in spatial cognition. Furthermore, it is unknown to what extent such spatial abilities predict chess ability.
+
+\subsection*{Field-specific ability beliefs}
+Andrei Cimpian, Princeton University philosopher Sarah-Jane Leslie, and colleagues studied 30 academic disciplines in the U.S. and found a strong negative correlation between the pervasiveness of innate-ability beliefs and the proportion of female Ph.D.s. \cite{leslie2015expectations}. Moreover, very young children already internalize beliefs that men are more brilliant than women. 
+
+A 2017 study showed that 6-year-old girls in the U.S. are already less likely to believe that members of their gender are “really, really smart,” and that they begin avoiding activities that are said to be for children who are “really, really smart.” \cite{bian2017gender}. As chess is typically thought of as an activity for really smart people, it seems likely that early-life exposure to societal beliefs about intelligence contribute to the participation gap in chess.
+
+ There are multiple mechanisms that could lead from gender-biased ability beliefs to lower female participation: parental biases, gatekeeping, self-selection, or drop-out due to a hostile environment or the consequences of stereotype threat. A hostile environment and stereotype threat could also cause lower performance in women who do stay in chess.
+
+\subsection*{Hostile environment} 
+This may be more pronounced among top players or not. Madeline Heilman and colleagues found that successful women in traditionally masculine roles are often derogated and disliked.
+
+\DS{Could add the famous Fischer quote in here, as well as Kasparov's 1989 Playboy comments and his subsequent change of mind after losing to Judit, as well as Carlsen's comments about the chess world needing a cultural change. See my article in \href{https:theconversation.com/whats-behind-the-gender-imbalance-in-top-level-chess-150637}{\underline{\textcolor{blue}{The Conversation}}}}
+
+\subsection*{Stereotype threat}
+A large number of studies have demonstrated that negative stereotypes about groups in cognitive domains may themselves be a cause of under-performance in those domains due to the pressure or anxiety induced by the stereotype. This effect, known as the 'Stereotype Threat' \cite{steelearonson1995ST}, has predominately been studied in the context of gender or racial differences in academic performance. Recent meta-analyses suggest that the stereotype threat causes females to perform worse on mathematical tests than males \cite{PichoRodriguezFinnie2013JSocPsych} and that interventions based around stereotype threat are largely effective \cite{LiuLiuWangZhang2020J.App.Psych}, though there is also evidence that these conclusions may be caused in part by publication bias \cite{DoyleVoyer2016;JelteWicherts2015JSchoolPsych}.
+
+Stereotype threat has also been explored in the chess domain. In recent paper in Psychological Science, \cite{Stafford2018PsySci} exploited a large dataset of over 5 million tournament chess games by over 167,000 players to demonstrate a ``negative stereotype threat'' in which female chess players outperformed expectations against males. However, in a subsequent comment \cite{smerdon2020female} showed that this result was driven by the omission of key control variables, namely age and experience, that capture the average difference in the position of the learning curves between observed females and males. Controlling for these omitted variables, \cite{smerdon2020female} show by way of a multiverse analysis that the typical stereotype threat effect emerges: female chess players underperform against male opponents. The effect size is roughly equivalent to the disadvantage of playing with the black pieces in every game.
+
+However, in their comment, \cite{smerdon2020female} also bring attention to a technical issue in using chess ratings as a control for ability or strength in causal identification of psychological effects in chess, such as the Stereotype Threat. The cleanest methodology to circumvent this identification issue is a randomised controlled experiment. The only example in chess to date is \citep{Maass2007EuropeanJSocialPsych}, who ran an experiment in which they manipulated whether or not subjects knew the gender of their opponents. Females performed worse when they believed they were playing against a male than when they believed they were facing another female, and lower chess-specific self-esteem was identified as a possible mechanism. However, the study was significantly underpowered compared to the studies using observational data ($N=42$ matched pairs) and did not control for chess ratings, age or experience, which are important moderating variables for this topic \citep{smerdon2020female}. 
+
+
+
+
+\subsection*{Parental biases}
+Parental biases may stem from parental beliefs that girls are innately less good at some activities than others, or that chess is not a ``suitable" activity for girls.
+
+In a well-known study, psychologists reported that parents were three times more likely to
+explain science to boys than to girls at exhibits in a science museum \cite{Crowley2001PsySci}. The authors found that the gender bias in parenting was likely not deliberate, but that this difference ``may be unintentionally contributing to a gender gap in children’s scientific literacy well before children encounter formal science instruction in grade school.'' The experience of the Polgar sisters suggests that it is worth investigating the presence of a similar effect in chess instruction...\DS{Go on to describe the `Polgar Experiment'} 
+
+
+
+\subsection*{Differences in competitiveness}
+\DS{Done. Will fill in the BibTex refs later.} A large body of evidence in experimental economics over the past two decades points towards gender differences in competitiveness. In a well-known laboratory study, Gneezy, Niederle and Rustichini (QJE 2003) found that females perform relatively worse than males in competitive environments compared to non-competitive environments, and that this effect is stronger in mix-sex competitions compared to single-sex competitions. This is consistent with the negative gender stereotype threat effect in chess reported in Smerdon et al. (2020). In another widely cited experiment, Niederle and Vesterlund (2007) found that females exhibit a preference against competitive environments. This effect has been repeated in subsequent studies, with roughly twice as many males self-selecting into competitions as females. 
+
+There is evidence that the gender gap in competitiveness widens towards extreme levels of competitiveness (Saccardo, Pietrasz and Gneezy, 2018 Management Science). Several hypotheses have been tested to explain the effect, including the role of culture and institutions (Booth et al. 2018 Economic Journal; Zhang 2018 Economic Journal; Dariel et al. 2017 Economic Science Association; Andersen et al. 2013 Review of Economics and Statistics), hormones (Apicella et al. 2011 J. Neuroscience, Psychology and Economics; Buser 2012 JEBO; Wozniak et al. 2014 J. Labour Economics), the nature of the tasks (Dreber, Essen and Ranehill 2014 Experimental Economics) and family background (Almas et al. 2019 Management Science), though there is evidence that the gap already emerges at kindergarten age (Sutter and Ruetzler 2015 Management Science).
+
+This literature typically uses lab experiments in which subjects' (incentivized) choice of a tournament or piece-rate payment scheme is the outcome measure of competitiveness, plausibly making these results relevant to the participation gap in chess. However, it is less clear whether gender differences in competitiveness directly affect performance in chess other than through participation. A recent working paper finds evidence that female role models increase women's willingness to compete by reducing stereotype threat, with the effect being strongest for high performing females (Meier, Niessen-Ruenzi & Ruenzi, 2020 SSRN http://dx.doi.org/10.2139/ssrn.3087862).
+
+
+
+
+\subsection*{Differences in risk aversion and confidence}
+There is also a large experimental literature supporting that males are generally more risk-tolerant and (over)confident than females (Charness and Gneezy 2012 JEBO; Dreber, Essen and Ranehill 2014 Experimental Economics; Reuben, Wiswall and Zafar 2017 The Economic Journal; Sapienza, Zingales & Maestripieri 2009 PNAS; see Boschinia et al. 2019 JEBO for a contrary result). There is some evidence that gender differences in risk preferences and confidence may account for the observed differences in competitiveness as measured in standard lab experiments with self-selection into tournaments (Veldhuizen 2017 WP; Dohmen et al. 2011 JEEA). 
+
+As with competitiveness, it is not clear whether or in what direction risk aversion and confidence affect performance in chess, a game renowned for requiring patience, strategic thinking and prophylactic planning. The closest Using a panel dataset of more than 1 million tournament chess games, Gerdes and Gransmark (2010 Labour Economics) report that males choose riskier strategies against females, even though this decreased their performance. However, the measure of riskiness used in this and subsequent studies (e.g. Dreber, Gerdes & Gransmark 2013 JEBO) used chess opening `codes' (ECOs), which, as a measure of riskiness at the game or player levels, also captures competitiveness and is likely to be confounded with strength. Advances in the use of within-game measures for large chess data analysis have the potential to produce more reliable and precise measures of risk tolerance at the move level, which is a promising area for future research.
+
+Recent evidence also suggests a mechanism related to differences in testosterone \cite{sapienza2009gender} or other biological explanations (Dreber and Hoffman 2010 WP).  At present, it is not clear whether or how differences in risk or ambiguity aversion affect the gender performance gap in chess. We believe this to be a promising area for future research.
+
+\subsection*{Differences in interest/preferences}
+Innate differences in interest could work both ways. On the one hand, if girls/women are less interested than boys/men, they might only continue playing chess if they are particularly good at chess. One other hand, if girls/women are less interested than boys/men, they might put in less effort and practice, leading to less improvement. The latter could help account for the observed gap, the former would go against it. 
+
+\NB{As a general primer I find this post very interesting: https://slatestarcodex.com/2017/08/07/contra-grant-on-exaggerated-differences/ (especially the first comments where they respond to each others criticism after the text are worth a read. Some of the cited articles: Gendered Occupational Interests: Prenatal Androgen Effects on Psychological Orientation to Things Versus People (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166361/), Gender Differences in Personality and Interests: When,Where, and Why? (https://sci-hub.se/10.1111/j.1751-9004.2010.00320.x), Personality and gender differences in global perspective (https://onlinelibrary.wiley.com/doi/full/10.1002/ijop.12265), Sex differences in rhesus monkey toy preferences parallel those of children (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2583786/), Sex differences in chimpanzees' use of sticks as play objects resemble those of children (https://www.cell.com/current-biology/fulltext/S0960-9822(10)01449-1), Fetal Testosterone Predicts Sexually Differentiated Childhood Behavior in Girls and in Boys (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2778233/), Gender role across development in adult women with congenital adrenal hyperplasia due to 21-hydroxylase deficiency (https://pubmed.ncbi.nlm.nih.gov/15526714/), Prenatal phthalate exposure and reduced masculine play in boys (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2874619/)}
+
+
+\subsection*{Society-level beliefs /political system}
+In math -- a field much like chess in several ways -- a fascinating “natural experiment” took place when Germany split into East and West Germany. The gender gap in math ended up being much smaller in East than West Germany, arguably because the East’s radically egalitarian system encouraged girls’ self-confidence and competitiveness in math \cite{lippmann2018math}. This demonstrates that gender differences in intellectual performance can be caused by society-level beliefs. 
+
+\DS{I am not sure about this section. If we are conducting quantitative analysis on our own data, potentially combining with UN measures of gender inequality, then this should be above in s.3.3.2. If we don't think this quantitative analysis fits, then we should scrap s.3.3.2 and instead rewrite the focus of this section. There is a clear parallel to STEM, I think, but I don't know of any other literature that explores what we're looking at. But we already talk about both math and competitiveness/risk in the sections above, so something is wrong with the flow.
+Possible topics:
+\begin{itemize}
+    \item Gender equality paradox in STEM (Stoet and Gaery 2018 Psy Sci)
+    \item Gender equality paradox in deep behavioural parameters (Falk and Hermle 2018 Science)
+    \item Gender equality paradox in chess may actually be a command-economy effect (Dilmaghani 2020 JoCE)
+\end{itemize}}
+
+\subsection*{Factors specific to top players}
+This is a category of factors that might be most pronounced among top players.
+
+\begin{itemize}
+    \item Do top women have a harder time making a living playing chess? 
+    \item Do top women have less access to tournaments that allow them to improve their rating?
+    \item Do top women have less access to top trainers, sponsors, or other resources arranged by the national federations?
+\end{itemize}
+
+\WJM{I am thinking we could use a simulation or calculation to show the effect of differences in top-level nurturing while accounting for base rates. Say we start with the same underlying distribution for men and women (but with fewer women), so that the residual top gap (observed minus expected) is zero. We then do an intervention that increases the ratings of both the top N men and the top N women, but more so for the men, then I think you will end up with a positive residual top gap. (Regardless of the fact that a woman gets paid more than a male player with the same rating.) This would show that the fact that a woman gets paid more than a male player with the same rating does not negate the possibility that differences in top-level nurturing help contribute to the observed top-level gap.}
+
+
+{\bf Financial conditions.} 
+Monetary prizes in tournaments usually favor men. The difference is obvious. If the event is friendly to women or girls, then the top prize is typically about two times as low as in a male event in the same category. Examples can be found from official events with limited number of qualified players to Open tournaments that open to most of the people. FIDE Candidates Tournament, as the official event organized by World Chess federation, is the one to determine the challenger to play a match with the current Champion. In this event, the top prize for Men is 95,000 Euros and the total Prize Fund is 420,000 Euros. (\url{https://www.fide.com/FIDE/handbook/regscandidates2018.pdf }) While the Same event for Women, the first prize is 50,000 Euros and the total Prize Fund is 200,000 Euros. \url{https://www.fide.com/images/stories/NEWS_2018/FIDE_NEWS/Rules_for_the_FIDE_Womens_Candidates_Tournament_2019.pdf } Isle of Man International event, as one of the increasing popular Open Tournament, also have a huge prize gap between male and female chess players. Taking the year of 2018, the top prize in Open Section is 50,000 Pounds, while the top prize for Women was only 7,000 Pounds, which is roughly 7 times lower \url{https://gamesmaven.io/chessdailynews/news/husband-and-wife-duo-win-2018-isle-of-man-chess-7jb18YwLYUW3UFgGYO7MLg}. World Cup, is another proof to show the prize difference among gender. 2019 World Cup, the top prize is 110,000 US Dollars and the total prize is 1,600,000 USD \url{https://www.fide.com/FIDE/handbook/WorldCup2019Regulations.pdf
+}, while the 2018 Women’s World Chess Championship (the same format as World Cup) having the top prize of 60,000 USD and the total prize 450,000 USD \url{https://chess24.com/en/embed-tournament/fide-womens-ko-world-championship-2018}. Even if we consider the number of the participants (128 male participants, 64 female participants) and divided the total prize of World Cup, the difference is still around two times. 
+Apart from the Prizes, the earnings also vary in starting fees. Another major type of the chess tournaments called ‘invitational’, which means the organizer has the power to decide the participation list and the starting fees the player will receive. This type of the tournament usually provides players ‘starting fees’ to attract top players, some may have prizes for the top places but some are ‘appearance-fee only’. Therefore, the starting fees is the main part among one’s earning, and the situation also favors men. A [possible] survey conducted to ask the organizers about their inviting conditions for top men and women shows that…… [top few players, and top female, the gap and willingness to invite.]
+
+It is also worth to mention that most of the invitational tournaments were only open to men, only the best women player may get invited time to time participating for few invitational events. Due to the rare opportunities and the unbalanced amount of the starting fees, the potential income of the women is hard to compare with the men who ranked at the same place.
+The other major difference on earnings with difference gender is the business opportunities, in which the top men are more likely to get a commercial contract, that comes with general recognition and income from advertisements. For example, Magnus Carlsen had cooperated with G-Star, Hikaru Nakamura had the contract with Red Bull and recently signed by TSM. However, those well-known brands do not have any direct cooperation with top women.
+
+The above three dimensions are the main resources of the player’s income, and the obvious unbalance causing the women more difficulties to make a living through playing chess.
+
+{\bf Entries to top-level tournaments.}
+From 2010-2020, there were (how many?) tournaments category above [19?], and only (?) of them had female chess players.
+For invitational chess tournaments, usually the organizer needs the support from the sponsors, then the minimum category may be the obstacle to hinder the invitation to female chess players due to their ratings.
+For the events organized by FIDE, there is a qualification system.
+
+{\bf Technical support.} (didn’t update) Gender differences in technical support are a consequence of differences in financial conditions. Because male and women are treated differently financially, it is difficult to maintain the same training environment. If a player is building a team by themselves, then they need to ensure that the earnings cover the cost. In the market, the rate that trainers/coaches charge could vary, therefore in case to .. (?) If a player comes from a planned economy, then sometimes they can get support from the government. However, this support typically also goes disproportionally to men. In this aspect, China was an exception between the 1980s and 2005, as the national team asked men to help women. However, this benefit has disappeared since, as the general performance of men increased.
+Survey in European chess (Alice O'Gorman): \url{https://www.europechess.org/wp-content/uploads/2020/04/Equality-}
+
+{\bf Career interruptions for child rearing.} Studies have shown that having children predicts less career engagement for women but not men [DS: Ref ? I don't think anything has been done here specific to chess careers].
+
+
+{\bf Competitiveness.} 
+[some Stats to support the view] 1) top women players are more tended to fight instead of short draws, especially under some critical moments that decide the places of the event [Stats can be found like: 1]top 10 and top 10 female, when playing with the players (+/- 100 with Elo ratings), the percentage of short draws (under move 25?).  2] other dimensions to define: complicated positions offering draw? / Refuse three times repetition under equal positions (engine evaluation).]
+Exploring the reasons behind the phenomenal, emotional? Or somethings else? Would competitiveness be a negative reason to extend the gap between men and women players?
+
+
+
+
+\section*{Discussion}
+Statements by high-profile chess players, and occasionally by scientists \cite{howard2014jbs}, make it seem as if it is easy to  distinguish biological from non-biological factors; in reality, this is very hard. Conclusively establishing biological differences between genders is challenging for any cognitive ability, let alone for one that requires formal rules, such as chess. When children are old enough to be tested on such abilities, they have already been exposed to many social and environmental factors that could cause or contribute to gender differences. 
+
+It has been suggested that people are drawn to biological explanations because ``inherent explanations” serve to reinforce hierarchies \cite{hussak2015early}. That works out conveniently for those in high-status positions—who, in the chess world, tend to be men. It is harder to acknowledge that external factors, such as an unfair distribution of resources or a hostile environment, have held top women back. 
+
+We argue that there is a lack of research on social and environmental factors affecting women in chess, and that confidently attributing statistical differences to biological differences is a mistake.
+
+
+\bibliographystyle{apacite}
+\bibliography{References.bib}
+
+%% SUPPLEMENTARY STARTS HERE
+
+
+\section*{Appendix: Tables}
+\begin{table*}[]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+    \input{tables/table_summary_statistics}
+\end{adjustbox}
+\caption{Table with summary statistics. This is the data for all men and women, but could also do the same for the highest 1, 10 etc.}
+    \label{tab:summary_statistics_by_federation}
+\end{table*}
+
+
+\begin{table*}[]
+\centering
+\input{tables/table_average_gap}
+\caption{\JCC{Observed gap in the average of men and women chess players for the 46 chess federations with at least thirty female active players. A statistically significant gap is indicated in bold (p-value \textless 0.05)} \WJM{Observed gap in the average vs proportion of female chess players.} \label{table_average_gap}}
+\end{table*}
+
+
+\begin{table*}[]
+\centering
+\input{tables/table_permutation_results}
+\input{tables/table_results_permutations}
+\caption{\JCC{Observed and expected gender gap following the permutations tests on the gender gap between the top players (gap "top player") and top 10 players (gap "top 10") for the 46 chess federations with at least thirty female active players. A statistically significant gap is indicated in bold (p-value \textless 0.05). Jose CHECK! THere are some differences. Also maybe remove the decimals from the expected difference values from all the tables.} \label{table_results_permutations}}
+\end{table*}
+
+
+\section{RLS results}
+
+Table RLS1 displays the leading results from the permutation test analysis, in the original analysis where juniors (birth date 2001 or later) were excluded; the explanations of the columns are in Table RLS2. All results are based on the tables complied by Nikos from the FIDE rating list of December 2019. Table RLS3 gives corresponding result when juniors are included.
+
+
+
+
+\newpage
+
+\phantom{x}
+\vskip0.1in
+\hskip-0.5in
+\textit{Table RLS1:} Distribution of number of games played, separated by rating level and sex, juniors omitted.
+
+\newpage
+
+
+
+
+\phantom{x}
+\vskip0.1in
+\hskip-0.5in
+\textit{Table RLS3:} Distribution of number of games played, separated by rating level and sex, juniors included.
+
+
+\begin{table*}[t]
+    \centering
+    \begin{tabular}{|l|l|l|l||l|l|l|}
+    \hline
+    \multirow{2}{*}{Same-gender rank} & \multicolumn{3}{c||}{Male} & \multicolumn{3}{c|}{Female}\\
+    \cline{2-7}
+    & Name & Rating & Overall rank  & Name & Rating & Overall rank \\
+    \hline
+       1  & Carlsen, Magnus & 2872 & 1 & Hou, Yifan & 2664 &  \\
+       2  & Caruana, Fabiano & 2822 & 2  & Ju, Wenjun & 2584 &  \\
+       3  & Ding, Liren & 2805 & 3 & Humpy, Koneru & 2580 &  \\
+       4  & Grischuk, Alexander & 2777 & 4 & Goryachkina, Aleksandra & 2578 &  \\
+       5  & Nepomniachtchi, Ian & 2774 & 5 & Lagno, Kateryna & 2552 &  \\
+       6  &  Aronian, Levon & 2773 & 6 & Muzychuk, Mariya & 2552 &  \\
+       7  & Vachier-Lagrave, Maxime	 & 2770 & 7 & Muzychuk, Anna & 2539 &  \\
+       8  & Mamedyarov, Shakhriyar & 2770 & 8 & Cmilyte, Viktorija & 2538 &  \\
+       9  & Giri, Anish & 2768 & 9 & Saduakassova, Dinara & 2519 &  \\
+       10  & So, Wesley & 2765 & 10 & Harika, Dronavalli & 2518 &  \\
+         \hline
+         Average & & 2789.6 & & & 2562.4 & \\
+         \hline
+    \end{tabular}
+    \caption{The world's 10 highest-ranked men and 10 highest-ranked women.  \RLS{X}\JCC{Check.}}
+    \label{tab:top_10}
+\end{table*}
+
+
+
+\end{document}
