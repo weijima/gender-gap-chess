@@ -38,21 +38,42 @@ global_data %>%
   mutate(rating = 100 * (9 + as.numeric(rating))) %>%
   ggplot() +
   geom_area(aes(x = rating, y = prop, colour = sex, fill = sex),
-           position = "identity", alpha = 0.15) +
+            position = "identity", alpha = 0.15) +
   #geom_text(data = . %>% select(filter, floor_txt, floor, label) %>% distinct(),
   #          aes(label = label, x = floor + 50), y = 0.2) +
-  labs(x = "Rating", y = "Proportion") +
   facet_grid(filter ~ floor_txt, scales = "free_x", switch = "y") +
-  scale_y_continuous(labels = scales::percent, breaks = 0:2 / 10) +
+  scale_x_continuous(name = "Rating", expand = c(0, 0), limits = c(NA, 2900),
+                     breaks = 1000 + 500 * 0:3) +
+  scale_y_continuous(name = "Proportion", labels = scales::percent,
+                     breaks = 0:2 / 10, expand = c(0, 0)) +
   scale_colour_manual(values = c("goldenrod", "steelblue")) +
   scale_fill_manual(values = c("goldenrod", "steelblue")) +
   theme_minimal() +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
         panel.grid = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
         legend.title = element_blank(),
-        legend.position = c(0.92, 0.46),
+        legend.position = c(0.92, 0.45),
         strip.placement = "outside")
 #ggsave("figures/global-fig.pdf", width = 4.8, height = 4.8)
+
+rating_data %>%
+  restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000, rating_data = .) %>%
+  filter(games != 0) %>%
+  mutate(log10games = log10(games)) %>%
+  filter(rating < 1600) %>%
+  #boxplot(log10games ~ sex, data = .)
+  t.test(log10games ~ sex, data = ., conf.int = TRUE)
+
+rating_data %>%
+  restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000, rating_data = .) %>%
+  filter(rating < 1400) %>%
+  count(sex, active) %>%
+  mutate(active = ifelse(active, "active", "inactive")) %>%
+  mutate(sex, active, frac = n / sum(n), .by = sex) %>%
+  select(-n) %>%
+  pivot_wider(names_from = sex, values_from = frac)
