@@ -14,31 +14,38 @@ rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil") %>% as_ti
 global_data <- crossing(juniors = c(TRUE, FALSE),
                         inactives = c(TRUE, FALSE),
                         floor = c(1000, 1400, 1600)) %>%
-  mutate(dat = pmap(., restrict_data, rating_data = rating_data)) %>%
   mutate(label = c("J","K","L","G","H","I","D","E","F","A","B","C")) %>%
-  unnest(dat) %>%
-  select(juniors, inactives, floor, sex, rating, label)
+  mutate(filter = case_when(
+    juniors & inactives   ~ "With juniors,\nwith inactives",
+    juniors & !inactives  ~ "With juniors,\nno inactives",
+    !juniors & inactives  ~ "No juniors,\nwith inactives",
+    !juniors & !inactives ~ "No juniors,\nno inactives"
+  )) %>%
+  mutate(filter = fct_relevel(filter, "With juniors,\nwith inactives",
+                              "With juniors,\nno inactives",
+                              "No juniors,\nwith inactives")) %>%
+  mutate(floor_txt = str_c("Rating floor: ", floor)) %>%
+  mutate(dat = pmap(list(juniors, inactives, floor),
+                    restrict_data, rating_data = rating_data)) %>%
+  select(-juniors, -inactives) %>%
+  unnest(dat)
 
 global_data %>%
-  mutate(juniors = ifelse(juniors, "With juniors, ", "No juniors, ")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
-  mutate(filter = str_c(juniors, inactives), .before = 1) %>%
-  mutate(filter = fct_relevel(filter, "With juniors, with inactives",
-                              "With juniors, no inactives",
-                              "No juniors, with inactives")) %>%
-  select(-juniors, -inactives) %>%
+  mutate(rating = cut(rating, breaks = 100*10:29, labels = 100*10:28, right = FALSE)) %>%
   mutate(sex = ifelse(sex == "F", "Women", "Men")) %>%
-  mutate(floor_txt = str_c("Rating floor: ", floor)) %>%
+  summarise(N = n(), .by = c(floor, label, filter, floor_txt, sex, rating)) %>%
+  mutate(prop = N / sum(N), .by = c(floor, label, filter, floor_txt, sex)) %>%
+  mutate(rating = 100 * (9 + as.numeric(rating))) %>%
   ggplot() +
-  geom_area(aes(x = rating, y = after_stat(density), colour = sex, fill = sex),
-            alpha = 0.15, stat = "bin", binwidth = 100, position = "identity") +
-  geom_text(data = . %>% select(filter, floor_txt, floor, label) %>% distinct(),
-            aes(label = label, x = floor), y = 0.002) +
+  geom_area(aes(x = rating, y = prop, colour = sex, fill = sex),
+           position = "identity", alpha = 0.15) +
+  #geom_text(data = . %>% select(filter, floor_txt, floor, label) %>% distinct(),
+  #          aes(label = label, x = floor + 50), y = 0.2) +
   labs(x = "Rating", y = "Proportion") +
   facet_grid(filter ~ floor_txt, scales = "free_x", switch = "y") +
+  scale_y_continuous(labels = scales::percent, breaks = 0:2 / 10) +
   scale_colour_manual(values = c("goldenrod", "steelblue")) +
   scale_fill_manual(values = c("goldenrod", "steelblue")) +
-  scale_x_continuous(limits = c(NA, 2900)) +
   theme_minimal() +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
@@ -46,10 +53,6 @@ global_data %>%
         panel.border = element_blank(),
         panel.background = element_blank(),
         legend.title = element_blank(),
-        legend.position = c(0.93, 0.44),
+        legend.position = c(0.92, 0.46),
         strip.placement = "outside")
-#ggsave("figures/global-fig.pdf", width = 7, height = 7)
-
-read_csv("data/global-stat-data.csv", col_types = "llidcddddd") %>%
-  select(-contains("statistic"), -contains("conf")) %>%
-  filter(KS_p.value >= 2.3e-9)
+#ggsave("figures/global-fig.pdf", width = 4.8, height = 4.8)
