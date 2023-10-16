@@ -14,7 +14,10 @@ rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil") %>% as_ti
 global_data <- crossing(juniors = c(TRUE, FALSE),
                         inactives = c(TRUE, FALSE),
                         floor = c(1000, 1400, 1600)) %>%
-  mutate(label = c("J","K","L","G","H","I","D","E","F","A","B","C")) %>%
+  left_join(read_csv("data/global-stat-data.csv", col_types = "lliicdii") %>%
+              select(juniors, inactives, floor, KS_statistic),
+            by = join_by(juniors, inactives, floor)) %>%
+  rename(D = KS_statistic) %>%
   mutate(filter = case_when(
     juniors & inactives   ~ "With juniors,\nwith inactives",
     juniors & !inactives  ~ "With juniors,\nno inactives",
@@ -30,50 +33,36 @@ global_data <- crossing(juniors = c(TRUE, FALSE),
   select(-juniors, -inactives) %>%
   unnest(dat)
 
+
 global_data %>%
   mutate(rating = cut(rating, breaks = 100*10:29, labels = 100*10:28, right = FALSE)) %>%
   mutate(sex = ifelse(sex == "F", "Women", "Men")) %>%
-  summarise(N = n(), .by = c(floor, label, filter, floor_txt, sex, rating)) %>%
-  mutate(prop = N / sum(N), .by = c(floor, label, filter, floor_txt, sex)) %>%
+  summarise(N = n(), .by = c(floor, filter, floor_txt, sex, rating, D)) %>%
+  mutate(prop = N / sum(N), .by = c(floor, filter, floor_txt, sex)) %>%
   mutate(rating = 100 * (9 + as.numeric(rating))) %>%
   ggplot() +
-  geom_area(aes(x = rating, y = prop, colour = sex, fill = sex),
-            position = "identity", alpha = 0.15) +
-  #geom_text(data = . %>% select(filter, floor_txt, floor, label) %>% distinct(),
-  #          aes(label = label, x = floor + 50), y = 0.2) +
+  geom_line(aes(x = rating, y = prop, colour = sex)) +
+  geom_area(aes(x = rating, y = prop, fill = sex),
+            colour = NA, position = "identity", alpha = 0.15) +
+  geom_text(data = . %>% select(filter, floor_txt, floor, D) %>% distinct(),
+            aes(label = str_c("italic(D) == ", round(D, 2)), x = 2500),
+            y = 0.18, size = 3, parse = TRUE) +
+  geom_vline(data = . %>% select(filter, floor_txt, floor) %>% distinct(),
+             aes(xintercept = floor), linetype = "dashed", alpha = 0.5) +
+  labs(x = "Rating", y = "Proportion") +
   facet_grid(filter ~ floor_txt, scales = "free_x", switch = "y") +
-  scale_x_continuous(name = "Rating", expand = c(0, 0), limits = c(NA, 2900),
-                     breaks = 1000 + 500 * 0:3) +
-  scale_y_continuous(name = "Proportion", labels = scales::percent,
-                     breaks = 0:2 / 10, expand = c(0, 0)) +
+  scale_x_continuous(limits = c(1000,2900), breaks = c(1000,1700,2400), expand = c(0,0))+
+  scale_y_continuous(labels = scales::percent, breaks = 0:2 / 10, expand = c(0, 0)) +
   scale_colour_manual(values = c("goldenrod", "steelblue")) +
   scale_fill_manual(values = c("goldenrod", "steelblue")) +
+  guides(fill = "none") +
   theme_minimal() +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
         panel.grid = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
         legend.title = element_blank(),
-        legend.position = c(0.92, 0.45),
+        legend.position = "bottom",
         strip.placement = "outside")
-#ggsave("figures/global-fig.pdf", width = 4.8, height = 4.8)
-
-rating_data %>%
-  restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000, rating_data = .) %>%
-  filter(games != 0) %>%
-  mutate(log10games = log10(games)) %>%
-  filter(rating < 1600) %>%
-  #boxplot(log10games ~ sex, data = .)
-  t.test(log10games ~ sex, data = ., conf.int = TRUE)
-
-rating_data %>%
-  restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000, rating_data = .) %>%
-  filter(rating < 1400) %>%
-  count(sex, active) %>%
-  mutate(active = ifelse(active, "active", "inactive")) %>%
-  mutate(sex, active, frac = n / sum(n), .by = sex) %>%
-  select(-n) %>%
-  pivot_wider(names_from = sex, values_from = frac)
+#ggsave("figures/global-fig.pdf", width = 4.8, height = 5.2)
