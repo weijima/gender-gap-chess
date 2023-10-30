@@ -140,9 +140,9 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
 
 
 read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
-  filter(fed == "ALL", stat == "obs") %>%
-  rename(gap = value) %>%
-  select(-stat) %>%
+  filter(fed == "ALL", stat %in% c("obs", "ptmean")) %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  rename(`Unadjusted` = obs, `Participation-adjusted` = ptmean) %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
   mutate(metric = case_when(
     metric == "mean" ~ "Mean gap (All)",
@@ -153,16 +153,19 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
-  mutate(gap = round(gap, 2)) %>%
+  summarise(across(contains("adjusted"), function(x) round(mean(x), 2)),
+            .by = c(filter, floor, metric)) %>%
   mutate(floor = as_factor(floor)) %>%
-  arrange(metric, floor, filter) %>%
-  mutate(gap = gap / first(gap), .by = c(metric)) %>%
+  pivot_longer(cols = contains("adjusted"), names_to = "response", values_to = "gap") %>%
+  mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
+  arrange(metric, response, floor, filter) %>%
+  mutate(gap = gap / gap[1], .by = c(metric)) %>%
   mutate(filter = fct_rev(filter)) %>%
   ggplot() +
   geom_label(aes(x = floor, y = filter, fill = gap,
                  label = scales::percent(gap, accuracy = 1))) +
   labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
-  facet_grid(metric ~ ., switch = "y") +
+  facet_grid(metric ~ response, switch = "y") +
   scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
                       breaks = c(0.5, 1), name = "fraction of original gap ") +
   theme_minimal(base_size = 14) +
