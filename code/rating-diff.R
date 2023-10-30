@@ -150,12 +150,13 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
     metric == "top1" ~ "Gap (Top 1)"
   )) %>%
   mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
-  mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
+  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
+  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
   summarise(across(contains("adjusted"), function(x) round(mean(x), 2)),
             .by = c(filter, floor, metric)) %>%
   mutate(floor = as_factor(floor)) %>%
+  mutate(`Participation-adjusted` = Unadjusted - `Participation-adjusted`) %>%
   pivot_longer(cols = contains("adjusted"), names_to = "response", values_to = "gap") %>%
   mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
   arrange(metric, response, floor, filter) %>%
