@@ -172,3 +172,41 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
         panel.background = element_blank(),
         legend.position = "bottom",
         strip.placement = "outside")
+
+
+read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+  filter(fed == "ALL", stat %in% c("obs", "ptmean")) %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  filter(metric %in% c("mean", "top1", "top10")) %>%
+  mutate(ptmean = obs - ptmean) %>%
+  pivot_longer(cols = c(obs, ptmean), names_to = "stat", values_to = "gap") %>%
+  mutate(stat = case_match(stat, "obs" ~ "Unadjusted",
+                           "ptmean" ~ "Participation-adjusted")) %>%
+  mutate(metric = case_match(metric, "mean" ~ "Mean gap (All)",
+                             "top10" ~ "Mean gap (Top 10)", "top1" ~ "Gap (Top 1)")) %>%
+  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
+  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
+  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
+  mutate(across(c(filter, floor, stat), as_factor),
+         metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  arrange(metric, stat, floor, filter) %>%
+  select(metric, stat, floor, filter, gap) %>%
+  mutate(gap = gap / gap[4], .by = c(metric)) %>%
+  pivot_wider(names_from = floor, values_from = gap) %>%
+  mutate(across(c(`1000`, `1400`, `1600`), function(x) str_c(round(100 * x), "%"))) %>%
+  mutate(gaplabel = str_c(`1000`, `1400`, `1600`, sep = "        ")) %>%
+  ggplot() +
+  geom_label(aes(x = 0, y = filter, label = gaplabel)) +
+  labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
+  facet_grid(metric ~ stat, switch = "y") +
+  scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
+                      breaks = c(0.5, 1), name = "fraction of original gap ") +
+  scale_x_continuous(breaks = c(-0.035, 0, 0.035), labels = c(1000, 1400, 1600)) +
+  theme_minimal(base_size = 14) +
+  theme(axis.line = element_line(colour = "grey80"),
+        axis.ticks = element_line(colour = "grey80"),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        legend.position = "bottom",
+        strip.placement = "outside")
