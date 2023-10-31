@@ -20,13 +20,13 @@ global_data <- crossing(juniors = c(TRUE, FALSE),
   rename(D = KS_statistic) %>%
   mutate(filter = case_when(
     juniors & inactives   ~ "With juniors,\nwith inactives",
-    juniors & !inactives  ~ "With juniors,\nno inactives",
-    !juniors & inactives  ~ "No juniors,\nwith inactives",
-    !juniors & !inactives ~ "No juniors,\nno inactives"
+    juniors & !inactives  ~ "With juniors,\nw/o inactives",
+    !juniors & inactives  ~ "W/o juniors,\nwith inactives",
+    !juniors & !inactives ~ "W/o juniors,\nw/o inactives"
   )) %>%
   mutate(filter = fct_relevel(filter, "With juniors,\nwith inactives",
-                              "With juniors,\nno inactives",
-                              "No juniors,\nwith inactives")) %>%
+                              "With juniors,\nw/o inactives",
+                              "W/o juniors,\nwith inactives")) %>%
   mutate(floor_txt = str_c("Rating floor: ", floor)) %>%
   mutate(dat = pmap(list(juniors, inactives, floor),
                     restrict_data, rating_data = rating_data)) %>%

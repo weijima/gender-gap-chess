@@ -46,8 +46,8 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
     metric == "top1" ~ "Gap (Top 1)"
   )) %>%
   mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
-  mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
+  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
+  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
   mutate(signif = ifelse(response == "yP", signif, strrep(" ", 55))) %>%
@@ -105,8 +105,8 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
     metric == "top1" ~ "Gap (Top 1)"
   )) %>%
   mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
-  mutate(juniors = ifelse(juniors, "With juniors", "No juniors")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "no inactives")) %>%
+  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
+  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
   summarise(across(starts_with("y"), function(x) round(mean(x), 2)),
             .by = c(filter, floor, metric)) %>%
@@ -142,31 +142,26 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
 read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   filter(fed == "ALL", stat %in% c("obs", "ptmean")) %>%
   pivot_wider(names_from = stat, values_from = value) %>%
-  rename(`Unadjusted` = obs, `Participation-adjusted` = ptmean) %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
-  mutate(metric = case_when(
-    metric == "mean" ~ "Mean gap (All)",
-    metric == "top10" ~ "Mean gap (Top 10)",
-    metric == "top1" ~ "Gap (Top 1)"
-  )) %>%
-  mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  mutate(ptmean = obs - ptmean) %>%
+  pivot_longer(cols = c(obs, ptmean), names_to = "stat", values_to = "gap") %>%
+  mutate(stat = case_match(stat, "obs" ~ "Unadjusted",
+                           "ptmean" ~ "Participation-adjusted")) %>%
+  mutate(metric = case_match(metric, "mean" ~ "Mean gap (All)",
+                             "top10" ~ "Mean gap (Top 10)", "top1" ~ "Gap (Top 1)")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
-  mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
-  summarise(across(contains("adjusted"), function(x) round(mean(x), 2)),
-            .by = c(filter, floor, metric)) %>%
-  mutate(floor = as_factor(floor)) %>%
-  mutate(`Participation-adjusted` = Unadjusted - `Participation-adjusted`) %>%
-  pivot_longer(cols = contains("adjusted"), names_to = "response", values_to = "gap") %>%
-  mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
-  arrange(metric, response, floor, filter) %>%
-  mutate(gap = gap / gap[1], .by = c(metric)) %>%
-  mutate(filter = fct_rev(filter)) %>%
+  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
+  mutate(across(c(filter, floor, stat), as_factor),
+         metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  arrange(metric, stat, floor, filter) %>%
+  select(metric, stat, floor, filter, gap) %>%
+  mutate(gap = gap / gap[4], .by = c(metric)) %>%
   ggplot() +
   geom_label(aes(x = floor, y = filter, fill = gap,
                  label = scales::percent(gap, accuracy = 1))) +
   labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
-  facet_grid(metric ~ response, switch = "y") +
+  facet_grid(metric ~ stat, switch = "y") +
   scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
                       breaks = c(0.5, 1), name = "fraction of original gap ") +
   theme_minimal(base_size = 14) +
