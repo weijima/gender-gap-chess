@@ -7,7 +7,7 @@ library(tidyverse) # Packages for efficient data manipulation and plotting
 # function modifies this file in-place (so its use requires care).
 fix_parsing <- function(datafile) {
   # Replace every occurrence of "SIAGM" with just "SIM", which fixes line width issue:
-  system(str_c("gsed -i 's/SIAGM/SIM/g' ", datafile)) # Use "sed" (Unix) to edit file
+  system(str_c("sed -i 's/SIAGM/SIM/g' ", datafile)) # Use "sed" (Unix) to edit file
 }
 
 

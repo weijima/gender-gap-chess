@@ -174,7 +174,7 @@ null_data %>%
 
 # Top1:
 global_data %>%
-  mutate(sd_M = map_dbl(male, max), sd_F = map_dbl(female, max))
+  mutate(top1_M = map_dbl(male, max), top1_F = map_dbl(female, max))
 null_data %>%
   filter(fed == "ALL") %>%
   filter(juniors, !inactives, floor == 1000) %>%
@@ -206,7 +206,7 @@ null_data %>%
 
 # Top10:
 global_data %>%
-  mutate(sd_M = map_dbl(male, top10), sd_F = map_dbl(female, top10))
+  mutate(top10_M = map_dbl(male, top10), top10_F = map_dbl(female, top10))
 null_data %>%
   filter(fed == "ALL") %>%
   filter(juniors, !inactives, floor == 1000) %>%

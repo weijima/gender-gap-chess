@@ -5,6 +5,7 @@
 
 * `tidyverse`: Efficient data manipulation and plotting
 * `Rcpp`: Importing and compiling functions written in C++
+* `fs`: Cross-platform file system operations
 
 Required non-standard hardware: none. However, reproducing the permutation results with sufficiently many permutations (more than a hundred thousand per sample) does benefit from having access to a computing cluster.
 
