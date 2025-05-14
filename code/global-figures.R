@@ -36,7 +36,7 @@ global_data <- crossing(juniors = c(TRUE, FALSE),
 
 global_data %>%
   mutate(rating = cut(rating, breaks = 100*10:29, labels = 100*10:28, right = FALSE)) %>%
-  mutate(sex = ifelse(sex == "F", "Women", "Men")) %>%
+  mutate(sex = fct_relevel(ifelse(sex == "F", "Women", "Men"), "Women", "Men")) %>%
   summarise(N = n(), .by = c(floor, filter, floor_txt, sex, rating, D)) %>%
   mutate(prop = N / sum(N), .by = c(floor, filter, floor_txt, sex)) %>%
   mutate(rating = 100 * (9 + as.numeric(rating))) %>%
@@ -53,8 +53,8 @@ global_data %>%
   facet_grid(filter ~ floor_txt, scales = "free_x", switch = "y") +
   scale_x_continuous(limits = c(1000,2900), breaks = c(1000,1700,2400), expand = c(0,0))+
   scale_y_continuous(labels = scales::percent, breaks = 0:2 / 10, expand = c(0, 0)) +
-  scale_colour_manual(values = c("goldenrod", "steelblue")) +
-  scale_fill_manual(values = c("goldenrod", "steelblue")) +
+  scale_colour_viridis_d(option = "C", end = 0.8) +
+  scale_fill_viridis_d(option = "C", end = 0.8) +
   guides(fill = "none") +
   theme_minimal() +
   theme(axis.line = element_line(colour = "grey80"),

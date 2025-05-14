@@ -68,8 +68,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   labs(x = "Rating floor", y = "Mean rating gap (men - women)") +
   facet_grid(metric ~ response, scale = "free_y", switch = "y") +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
-  scale_colour_manual(name = "",
-                      values = rev(c("steelblue","forestgreen","goldenrod","plum3"))) +
+  scale_colour_viridis_d(name = "", option = "C", end = 0.85, direction = -1) +
   scale_fill_manual(name = "", values = rep("white", 4)) +
   scale_alpha_manual(name = "", values = c(0.7, 1, 0.2)) +
   guides(alpha = guide_legend(nrow = 1, order = 1,
@@ -83,13 +82,14 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
         panel.border = element_blank(),
         panel.background = element_blank(),
         strip.placement = "outside",
-        legend.position = c(0.5, 0.735),
+        legend.position = "inside",
+        legend.position.inside = c(0.5, 0.48),
         legend.box = "vertical",
         legend.direction = "vertical",
-        legend.spacing.y = unit(18.6, "lines"),
+        legend.spacing.y = unit(36.75, "lines"),
         legend.margin = margin(0, 0, 0, 0),
         plot.margin = unit(c(0.1, 0.1, 1.3, 0.1), "cm"))
-#ggsave("figures/fig_4.pdf", width = 10, height = 8.57)
+ggsave("figures/fig_4.pdf", width = 10, height = 8.57)
 
 
 read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
