@@ -41,11 +41,11 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   filter(method == "fdr") %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
   mutate(metric = case_when(
-    metric == "mean" ~ "Mean gap (All)",
-    metric == "top10" ~ "Mean gap (Top 10)",
-    metric == "top1" ~ "Gap (Top 1)"
+    metric == "mean" ~ "Mean gap",
+    metric == "top10" ~ "Top 10 gap",
+    metric == "top1" ~ "Top gap "
   )) %>%
-  mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  mutate(metric = fct_relevel(metric, "Mean gap", "Top 10 gap")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
@@ -65,7 +65,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_jitterdodge(jitter.width = 0.06, seed = 54321)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
-  labs(x = "Rating floor", y = "Mean rating gap (men - women)") +
+  labs(x = "Rating floor", y = "Rating gap (men - women)") +
   facet_grid(metric ~ response, scale = "free_y", switch = "y") +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   scale_colour_viridis_d(name = "", option = "C", end = 0.85, direction = -1) +

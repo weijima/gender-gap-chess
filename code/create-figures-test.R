@@ -141,10 +141,12 @@ histogram_plot <- function(data, top, xlims = NULL) {
     filter(metric == top) %>%
     ggplot(aes(x = OBS_diff)) +
     geom_histogram(aes(y = after_stat(count / sum(count))),
-                   colour = "white", fill = "grey50", bins = 30) +
+                   colour = "white", fill = viridis::plasma(1),
+                   bins = 30, alpha = 0.5) +
     geom_vline(xintercept = 0, linetype = "dashed") +
     expand_limits(y = c(0, 0.3), x = xlims) +
-    geom_point(aes(x = mean(OBS_diff), y = -0.014), shape = 17, size = rel(1)) +
+    geom_point(aes(x = mean(OBS_diff), y = -0.014), shape = 17, size = rel(1),
+               colour = viridis::plasma(1)) +
     scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3))
 }
 
@@ -206,8 +208,10 @@ adj_histogram_plot <- function(data, top, adj_var = "ptmean", xlims = c(0, 800))
     mutate(ADJ = OBS_diff - .data[[adj_var]]) %>%
     ggplot(aes(x = ADJ)) +
     geom_histogram(aes(y = after_stat(count / sum(count))),
-                   colour = "white", fill = "grey50", bins = 30) +
-    geom_point(aes(x = mean(ADJ), y = -0.013), shape = 17, size = rel(1)) +
+                   colour = "white", fill = viridis::plasma(1),
+                   bins = 30, alpha = 0.5) +
+    geom_point(aes(x = mean(ADJ), y = -0.013), shape = 17, size = rel(1),
+               colour = viridis::plasma(1)) +
     geom_vline(xintercept = 0, linetype = "dashed") +
     expand_limits(y = c(0, 0.3), x = xlims) +
     scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3))
@@ -229,7 +233,7 @@ experience_scatter <- function(rating_data, top = Inf) {
                 linetype = "dashed", color = "grey40") +
     scale_y_continuous(breaks = c(0, 200, 400, 600, 800)) +
     scale_x_continuous(breaks = c(0, 200, 400, 600, 800)) +
-    geom_point(size = 0.8) +
+    geom_point(size = 0.8, color = viridis::plasma(1), alpha = 0.6) +
     expand_limits(x = lims, y = lims)
 }
 
@@ -245,7 +249,7 @@ age_scatter <- function(data, top) {
     ggplot(aes(y = F, x = M)) +
     geom_abline(aes(slope = 1, intercept = 0),
                 linetype = "dashed", color = "grey40") +
-    geom_point(size = 0.8) +
+    geom_point(size = 0.8, color = viridis::plasma(1), alpha = 0.6) +
     scale_y_continuous(breaks = seq(10, 70, 10)) +
     scale_x_continuous(breaks = seq(10, 70, 10)) +
     expand_limits(x = lims, y = lims)
@@ -273,7 +277,7 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
   p22 <- experience_scatter(rating_data, top = 10) +
     labs(x = "Mean # Games M (Top 10)", y = "Mean # Games W (Top 10)")
   p23 <- experience_scatter(rating_data, top = 1) +
-    labs(x = "# Games M (Top 1)", y = "# Games (Top 1)")
+    labs(x = "# Games M (Top 1)", y = "# Games W (Top 1)")
 
   # Third row: age women vs. age men
   p31 <- age_scatter(data, top = "ALL") +
