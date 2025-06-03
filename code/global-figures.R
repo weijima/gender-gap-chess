@@ -46,7 +46,7 @@ global_data %>%
             colour = NA, position = "identity", alpha = 0.15) +
   geom_text(data = . %>% select(filter, floor_txt, floor, D) %>% distinct(),
             aes(label = str_c("italic(D) == ", round(D, 2)), x = 2500),
-            y = 0.18, size = 3, parse = TRUE) +
+            y = 0.21, size = 3, parse = TRUE) +
   geom_vline(data = . %>% select(filter, floor_txt, floor) %>% distinct(),
              aes(xintercept = floor), linetype = "dashed", alpha = 0.5) +
   labs(x = "Rating", y = "Proportion") +
@@ -56,13 +56,15 @@ global_data %>%
   scale_colour_viridis_d(option = "C", end = 0.8) +
   scale_fill_viridis_d(option = "C", end = 0.8) +
   guides(fill = "none") +
-  theme_minimal() +
-  theme(axis.line = element_line(colour = "grey80"),
-        axis.ticks = element_line(colour = "grey80"),
-        panel.grid = element_blank(),
-        panel.border = element_blank(),
+  #theme_minimal() +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        #axis.line = element_line(colour = "grey80"),
+        #axis.ticks = element_line(colour = "grey80"),
+        #panel.border = element_blank(),
         panel.background = element_blank(),
         legend.title = element_blank(),
         legend.position = "bottom",
+        strip.background = element_blank(),
         strip.placement = "outside")
 #ggsave("figures/global-fig.pdf", width = 4.8, height = 5.2)

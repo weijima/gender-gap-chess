@@ -65,7 +65,8 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_jitterdodge(jitter.width = 0.06, seed = 54321)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
-  labs(x = "Rating floor", y = "Rating gap (men - women)") +
+  labs(x = "Rating floor",
+       y = expression(paste("Rating gap (men ", phantom() - phantom()," women)"))) +
   facet_grid(metric ~ response, scale = "free_y", switch = "y") +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   scale_colour_viridis_d(name = "", option = "C", end = 0.85, direction = -1) +
@@ -75,12 +76,14 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
                               override.aes = list(shape = c(NA, 19, 19))),
          colour = guide_legend(nrow = 1, order = 2, override.aes = list(alpha = 1)),
          fill = guide_legend(nrow = 1, order = 2)) +
-  theme_minimal(base_size = 14) +
-  theme(axis.line = element_line(colour = "grey80"),
-        axis.ticks = element_line(colour = "grey80"),
-        panel.grid = element_blank(),
-        panel.border = element_blank(),
+  theme_bw(base_size = 14) +
+  #theme_minimal(base_size = 14) +
+  theme(panel.grid = element_blank(),
+        #axis.line = element_line(colour = "grey80"),
+        #axis.ticks = element_line(colour = "grey80"),
+        #panel.border = element_blank(),
         panel.background = element_blank(),
+        strip.background = element_blank(),
         strip.placement = "outside",
         legend.position = "inside",
         legend.position.inside = c(0.5, 0.48),
@@ -88,8 +91,9 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
         legend.direction = "vertical",
         legend.spacing.y = unit(36.75, "lines"),
         legend.margin = margin(0, 0, 0, 0),
+        legend.background = element_blank(),
         plot.margin = unit(c(0.1, 0.1, 1.3, 0.1), "cm"))
-ggsave("figures/fig_4.pdf", width = 10, height = 8.57)
+#ggsave("figures/summary-fig.pdf", width = 10, height = 8.57)
 
 
 read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
