@@ -13,12 +13,11 @@ restrict_data <- function(rating_data, juniors, inactives, floor,
 
 
 gender_tab <- function(rating_data, property, top_n) { # property = "games" or "age"
-  col <- sym(property)
   rating_data %>%
     arrange(fed, sex, rating) %>%
     slice_tail(n = top_n, by = c(fed, sex)) %>%
-    select(fed, sex, !!col) %>%
-    summarise(prop = mean(!!col), .by = c(fed, sex)) %>%
+    select(fed, sex, !!sym(property)) %>%
+    summarise(prop = mean(!!sym(property)), .by = c(fed, sex)) %>%
     pivot_wider(names_from = sex, values_from = prop)
 }
 

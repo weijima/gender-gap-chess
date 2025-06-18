@@ -41,11 +41,11 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   filter(method == "fdr") %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
   mutate(metric = case_when(
-    metric == "mean" ~ "Mean gap",
+    metric == "mean" ~ "Overall mean gap",
     metric == "top10" ~ "Top 10 gap",
-    metric == "top1" ~ "Top gap "
+    metric == "top1" ~ "Top 1 gap "
   )) %>%
-  mutate(metric = fct_relevel(metric, "Mean gap", "Top 10 gap")) %>%
+  mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
@@ -65,8 +65,10 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_jitterdodge(jitter.width = 0.06, seed = 54321)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
-  labs(x = "Rating floor",
-       y = expression(paste("Rating gap (men ", phantom() - phantom()," women)"))) +
+  labs(
+    x = "Rating floor",
+    y = expression(paste("Rating gap ", (M - W)))
+  ) +
   facet_grid(metric ~ response, scale = "free_y", switch = "y") +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   scale_colour_viridis_d(name = "", option = "C", end = 0.85, direction = -1) +
@@ -76,12 +78,11 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
                               override.aes = list(shape = c(NA, 19, 19))),
          colour = guide_legend(nrow = 1, order = 2, override.aes = list(alpha = 1)),
          fill = guide_legend(nrow = 1, order = 2)) +
-  theme_bw(base_size = 14) +
-  #theme_minimal(base_size = 14) +
+  theme_minimal(base_size = 14) +
   theme(panel.grid = element_blank(),
-        #axis.line = element_line(colour = "grey80"),
-        #axis.ticks = element_line(colour = "grey80"),
-        #panel.border = element_blank(),
+        axis.line = element_line(colour = "grey80"),
+        axis.ticks = element_line(colour = "grey80"),
+        panel.border = element_blank(),
         panel.background = element_blank(),
         strip.background = element_blank(),
         strip.placement = "outside",
@@ -104,16 +105,15 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   select(-c(stat, E, A, weight)) %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
   mutate(metric = case_when(
-    metric == "mean" ~ "Mean gap (All)",
-    metric == "top10" ~ "Mean gap (Top 10)",
-    metric == "top1" ~ "Gap (Top 1)"
+    metric == "mean" ~ "Overall mean gap",
+    metric == "top10" ~ "Top 10 gap",
+    metric == "top1" ~ "Top 1 gap "
   )) %>%
-  mutate(metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
-  summarise(across(starts_with("y"), function(x) round(mean(x), 2)),
-            .by = c(filter, floor, metric)) %>%
+  summarise(across(starts_with("y"), mean), .by = c(filter, floor, metric)) %>%
   mutate(floor = as_factor(floor)) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
   mutate(response = case_match(
@@ -124,12 +124,15 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   )) %>%
   mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
   arrange(metric, response, floor, filter) %>%
-  mutate(gap = gap / first(gap), .by = c(metric)) %>%
+  mutate(gap = gap / gap[2], .by = c(metric)) %>%
   mutate(filter = fct_rev(filter)) %>%
   ggplot() +
   geom_label(aes(x = floor, y = filter, fill = gap,
                  label = scales::percent(gap, accuracy = 1))) +
-  labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
+  labs(
+    x = "Rating floor",
+    y = expression(paste("Mean of mean rating gap ", (M - W)))
+  ) +
   facet_grid(metric ~ response, switch = "y") +
   scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
                       breaks = c(0.5, 1), name = "fraction of original gap ") +
@@ -151,24 +154,33 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   pivot_longer(cols = c(obs, ptmean), names_to = "stat", values_to = "gap") %>%
   mutate(stat = case_match(stat, "obs" ~ "Unadjusted",
                            "ptmean" ~ "Participation-adjusted")) %>%
-  mutate(metric = case_match(metric, "mean" ~ "Mean gap (All)",
-                             "top10" ~ "Mean gap (Top 10)", "top1" ~ "Gap (Top 1)")) %>%
+  mutate(metric = case_when(
+    metric == "mean" ~ "Overall mean gap",
+    metric == "top10" ~ "Top 10 gap",
+    metric == "top1" ~ "Top 1 gap "
+  )) %>%
+  mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
-  mutate(across(c(filter, floor, stat), as_factor),
-         metric = fct_relevel(metric, "Mean gap (All)", "Mean gap (Top 10)")) %>%
+  mutate(across(c(filter, floor, stat), as_factor)) %>%
   arrange(metric, stat, floor, filter) %>%
   select(metric, stat, floor, filter, gap) %>%
-  mutate(gap = gap / gap[4], .by = c(metric)) %>%
-  mutate(gap = ifelse(floor!=1400 & stat=="Unadjusted" & metric!="Mean gap (All)",
+  mutate(gap = gap / gap[3], .by = c(metric)) %>%
+  mutate(gap = ifelse(floor!=1400 & stat=="Unadjusted" & metric!="Overall mean gap",
                       NA, gap)) %>%
   mutate(gap_label = str_c(round(100 * gap), "%")) %>%
-  mutate(gap_label = ifelse(floor==1400 & stat=="Unadjusted" & metric!="Mean gap (All)",
-                            str_c(strrep(" ",17),gap_label,strrep(" ",17)),gap_label))%>%
+  mutate(
+    gap_label = ifelse(floor==1400 & stat=="Unadjusted" & metric != "Overall mean gap",
+                       str_c(strrep(" ", 17), gap_label,strrep(" ", 17)),
+                       gap_label)
+  ) %>%
   ggplot() +
   geom_label(aes(x = floor, y = filter, fill = gap, label = gap_label)) +
-  labs(x = "Rating floor", y = "Mean of mean rating gap (men - women)") +
+  labs(
+    x = "Rating floor",
+    y = expression(paste("Mean of mean rating gap ", (M - W)))
+  ) +
   facet_grid(metric ~ stat, switch = "y") +
   scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
                       breaks = c(0.5, 1), name = "fraction of original gap ") +

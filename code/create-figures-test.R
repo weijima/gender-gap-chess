@@ -265,41 +265,34 @@ figure_3 <- function(result_data, rating_data, feds_to_keep,
 
   # First row: adjusted mean rating
   p11 <- adj_histogram_plot(data, top = "ALL", xlims = c(0, 800)) +
-    labs(x = "P-adjusted gap (All)", y = "Proportion\nof federations")
+    labs(x = "P-adjusted overall mean gap", y = "Proportion\nof federations")
   p12 <- adj_histogram_plot(data, top = "MAX10", xlims = c(0, 800)) +
-    labs(x = "P-adjusted gap (Top 10)", y = "Proportion\nof federations")
+    labs(x = "P-adjusted top 10 gap", y = "Proportion\nof federations")
   p13 <- adj_histogram_plot(data, top = "MAX1", xlims = c(0, 800)) +
-    labs(x = "P-adjusted gap (Top 1)", y = "Proportion\nof federations")
+    labs(x = "P-adjusted top 1 gap", y = "Proportion\nof federations")
 
   # Second row: experience women vs. age men
   p21 <- experience_scatter(rating_data, top = Inf) +
-    labs(x = "Mean # Games M (All)", y = "Mean # Games W (All)")
+    labs(x = "Mean # games M (all)", y = "Mean # games W (all)")
   p22 <- experience_scatter(rating_data, top = 10) +
-    labs(x = "Mean # Games M (Top 10)", y = "Mean # Games W (Top 10)")
+    labs(x = "Mean # games M (top 10)", y = "Mean # games W (top 10)")
   p23 <- experience_scatter(rating_data, top = 1) +
-    labs(x = "# Games M (Top 1)", y = "# Games W (Top 1)")
+    labs(x = "# games M (top 1)", y = "# games W (top 1)")
 
   # Third row: age women vs. age men
   p31 <- age_scatter(data, top = "ALL") +
-    labs(x = "Mean Age M (All)", y = "Mean Age W (All)")
+    labs(x = "Mean age M (all)", y = "Mean age W (all)")
   p32 <- age_scatter(data, top = "MAX10") +
-    labs(x = "Mean Age M (Top 10)", y = "Mean Age W (Top 10)")
+    labs(x = "Mean age M (top 10)", y = "Mean age W (top 10)")
   p33 <- age_scatter(data, top = "MAX1") +
-    labs(x = "Age M (Top 1)", y = "Age W (Top 1)")
+    labs(x = "Age M (top 1)", y = "Age W (Top 1)")
 
   p41 <- adj_histogram_plot(data, top = "ALL", adj_var = "yPEA", xlims = c(0, 800)) +
-    labs(x = "PEA-adjusted gap (All)", y = "Proportion\nof federations")
+    labs(x = "PEA-adjusted overall mean gap", y = "Proportion\nof federations")
   p42 <- adj_histogram_plot(data, top = "MAX10", adj_var = "yPEA", xlims = c(0, 800)) +
-    labs(x = "PEA-adjusted gap (Top 10)", y = "Proportion\nof federations")
+    labs(x = "PEA-adjusted top 10 gap", y = "Proportion\nof federations")
   p43 <- adj_histogram_plot(data, top = "MAX1", adj_var = "yPEA", xlims = c(0, 800)) +
-    labs(x = "PEA-adjusted Top 1 gap", y = "Proportion\nof federations")
-
-  # layout <- "
-  # ABC
-  # DEF
-  # GHI
-  # JKL
-  # "
+    labs(x = "PEA-adjusted top 1 gap", y = "Proportion\nof federations")
 
   layout <- "
   ADGJ
@@ -325,5 +318,5 @@ figure_3(result_data = nulls(null_data, "juniors", "no_inactives"),
            mutate(metric = case_match(metric, "mean" ~ "ALL", "top10" ~ "MAX10",
                                       "top1" ~ "MAX1"))) &
   theme(axis.title = element_text(size = rel(0.9)))
-ggsave(file = "figures/fig_3_w_jun_no_ina.pdf", width = 10, height = 7)
+#ggsave(file = "figures/fig_3_w_jun_no_ina.pdf", width = 10, height = 7)
 
