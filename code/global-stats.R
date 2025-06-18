@@ -1,5 +1,6 @@
 library(tidyverse)
 
+
 top10 <- function(x) mean(tail(sort(x), 10))
 
 participation_gap <- function(rating_data) {

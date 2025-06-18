@@ -48,7 +48,14 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
-  mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
+  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
+  mutate(filter = fct_relevel(
+    filter,
+    "With juniors, w/o inactives",
+    "With juniors, with inactives",
+    "W/o juniors, with inactives",
+    "W/o juniors, w/o inactives"
+  )) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
   mutate(signif = ifelse(response == "yP", signif, strrep(" ", 55))) %>%
   mutate(signif = fct_relevel(signif, strrep(" ", 55), "Significant")) %>%
@@ -102,7 +109,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   rename(y = value) %>%
   left_join(read_csv("data/age-experience-tab.csv", show_col_types = FALSE),
             by = join_by(metric, juniors, inactives, floor, fed)) %>%
-  select(-c(stat, E, A, weight)) %>%
+  select(!c(stat, E, A, weight)) %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
   mutate(metric = case_when(
     metric == "mean" ~ "Overall mean gap",
@@ -112,7 +119,14 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
-  mutate(filter = fct_rev(str_c(juniors, ", ", inactives)), .before = 1) %>%
+  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
+  mutate(filter = fct_rev(fct_relevel(
+    filter,
+    "With juniors, w/o inactives",
+    "With juniors, with inactives",
+    "W/o juniors, with inactives",
+    "W/o juniors, w/o inactives"
+  ))) %>%
   summarise(across(starts_with("y"), mean), .by = c(filter, floor, metric)) %>%
   mutate(floor = as_factor(floor)) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
@@ -124,18 +138,17 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   )) %>%
   mutate(response = fct_relevel(response, "Unadjusted", "Participation-adjusted")) %>%
   arrange(metric, response, floor, filter) %>%
-  mutate(gap = gap / gap[2], .by = c(metric)) %>%
-  mutate(filter = fct_rev(filter)) %>%
+  mutate(gap = gap / gap[4], .by = c(metric)) %>%
   ggplot() +
   geom_label(aes(x = floor, y = filter, fill = gap,
                  label = scales::percent(gap, accuracy = 1))) +
   labs(
     x = "Rating floor",
-    y = expression(paste("Mean of mean rating gap ", (M - W)))
+    y = expression(paste("Rating gap ", (M - W), ", averaged over federatons"))
   ) +
   facet_grid(metric ~ response, switch = "y") +
   scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
-                      breaks = c(0.5, 1), name = "fraction of original gap ") +
+                      breaks = c(0.5, 1), name = "Fraction of original gap ") +
   theme_minimal(base_size = 14) +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
@@ -144,6 +157,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
         panel.background = element_blank(),
         legend.position = "bottom",
         strip.placement = "outside")
+#ggsave("figures/per-fed-rating-percentage.pdf", width = 8, height = 6)
 
 
 read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
@@ -163,10 +177,17 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
   mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
   mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
-  mutate(across(c(filter, floor, stat), as_factor)) %>%
+  mutate(filter = fct_rev(fct_relevel(
+    filter,
+    "With juniors, w/o inactives",
+    "With juniors, with inactives",
+    "W/o juniors, with inactives",
+    "W/o juniors, w/o inactives"
+  ))) %>%
+  mutate(across(c(floor, stat), as_factor)) %>%
   arrange(metric, stat, floor, filter) %>%
   select(metric, stat, floor, filter, gap) %>%
-  mutate(gap = gap / gap[3], .by = c(metric)) %>%
+  mutate(gap = gap / gap[4], .by = c(metric)) %>%
   mutate(gap = ifelse(floor!=1400 & stat=="Unadjusted" & metric!="Overall mean gap",
                       NA, gap)) %>%
   mutate(gap_label = str_c(round(100 * gap), "%")) %>%
@@ -179,11 +200,11 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   geom_label(aes(x = floor, y = filter, fill = gap, label = gap_label)) +
   labs(
     x = "Rating floor",
-    y = expression(paste("Mean of mean rating gap ", (M - W)))
+    y = expression(paste("Rating gap ", (M - W)))
   ) +
   facet_grid(metric ~ stat, switch = "y") +
   scale_fill_gradient(low = "white", high = "grey60", labels = scales::percent,
-                      breaks = c(0.5, 1), name = "fraction of original gap ") +
+                      breaks = c(0.5, 1), name = "Fraction of original gap ") +
   theme_minimal(base_size = 14) +
   theme(axis.line = element_line(colour = "grey80"),
         axis.ticks = element_line(colour = "grey80"),
@@ -192,4 +213,4 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
         panel.background = element_blank(),
         legend.position = "bottom",
         strip.placement = "outside")
-#ggsave("figures/global-rating-percentage.pdf", width = 7, height = 6)
+#ggsave("figures/global-rating-percentage.pdf", width = 8, height = 6)
