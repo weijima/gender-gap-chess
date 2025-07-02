@@ -39,7 +39,7 @@ federationTable <- function(rating_data, jun, inact, ratfloor) {
     mutate(across(ends_with("obs") | ends_with("ptmean"), round)) %>%
     mutate(across(ends_with("ptpval"), \(x) round(x, 4))) %>%
     mutate(across(ends_with("ptpval"), \(x) {
-      ifelse(x == 0, "< 10\\textsuperscript{--4}", sprintf("%.4f", x))
+      ifelse(x == 0, "$<$ 10\\textsuperscript{--4}", sprintf("%.4f", x))
     } )) %>%
     arrange(desc(percent_women))
 }
