@@ -10,8 +10,8 @@ participation_gap <- function(rating_data) {
     )
 }
 
-restrict_data <- function(juniors, inactives, floor,
-                          rating_data, birth_uncertain = FALSE) {
+restrict_data <- function(rating_data, juniors, inactives, floor,
+                          birth_uncertain = FALSE) {
   if (juniors) max_byear <- 2019 else max_byear <- 1999
   rating_data %>%
     filter(if (inactives) TRUE else active) %>%
@@ -20,19 +20,22 @@ restrict_data <- function(juniors, inactives, floor,
 }
 
 
-federationTable <- function(rating_data, jun, inact, ratfloor) {
-  read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+federationTable <- function(null_stats, rating_data, juniors, inactives, floor) {
+  null_tab <- null_stats %>%
     filter(fed != "ALL" & metric %in% c("mean", "top10", "top1") & stat != "ptsd") %>%
-    filter(juniors == jun & inactives == inact & floor == ratfloor) %>%
+    filter(juniors == {{juniors}} & inactives == {{inactives}} & floor == {{floor}}) %>%
     select(!juniors & !inactives & !floor) %>%
-    pivot_wider(names_from = c(metric, stat), values_from = value) %>%
-    left_join(
-      rating_data %>%
-        restrict_data(juniors = jun, inactives = inact, floor = ratfloor) %>%
-        participation_gap() %>%
-        filter(`M` >= 30 & `F` >= 30),
-      by = join_by(fed)
-    ) %>%
+    pivot_wider(names_from = c(metric, stat), values_from = value)
+  rating_tab <- rating_data %>%
+    restrict_data({{juniors}}, {{inactives}}, {{floor}}) %>%
+    participation_gap() %>%
+    filter(`M` >= 30 & `F` >= 30)
+    left_join(null_tab, rating_tab, by = join_by(fed))
+}
+
+
+fedTableForOutput <- function(fedTable) {
+  fedTable %>%
     relocate(fed, `M`, `F`, percent_women, mean_obs, mean_ptmean, mean_ptpval,
              top10_obs, top10_ptmean, top10_ptpval,
              top1_obs, top1_ptmean, top1_ptpval) %>%
@@ -46,15 +49,15 @@ federationTable <- function(rating_data, jun, inact, ratfloor) {
 
 
 
-crossing(jun = c(TRUE, FALSE),
-         inact = c(TRUE, FALSE),
-         ratfloor = c(1000, 1400, 1600)) %>%
-  mutate(rating_data = list(read_csv("data/rating-data.csv", col_types = "ccciiil")),
+crossing(juniors = c(TRUE, FALSE),
+         inactives = c(TRUE, FALSE),
+         floor = c(1000, 1400, 1600)) %>%
+  mutate(null_stats = list(read_csv("data/null-stats.csv", col_types = "llicccd")),
+         rating_data = list(read_csv("data/rating-data.csv", col_types = "ccciiil")),
          .before = 1) %>%
-  mutate(table = pmap(., federationTable)) %>%
+  mutate(table = pmap(., compose(fedTableForOutput, federationTable))) %>%
   mutate(table = map(table, \(x) knitr::kable(x, format = "latex", escape = FALSE))) %>%
   mutate(fname = str_c("data/federation-tables/fedtab-",
-                       ifelse(jun, "", "no"), "juniors-",
-                       ifelse(inact, "", "no"), "inactives-",
-                       ratfloor, ".tex")) %>%
+                       ifelse(juniors, "", "no"), "juniors-",
+                       ifelse(inactives, "", "no"), "inactives-", floor, ".tex")) %>%
   mutate(table = walk2(table, fname, write_lines))
