@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(tidyverse)
 
 
@@ -38,8 +39,8 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
   s <- signif_female + signif_male
   # Translate the arbitrary symbols 2 and 1 into test describing significance:
   case_when(
-    s %in% 1:2 ~ "Significant under the participation rate hypothesis",
-    s == 0 ~ "Not significant under the participation rate hypothesis",
+    s %in% 1:2 ~ "Significant            ",
+    s == 0 ~ "Not significant",
     .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
   )
 }
@@ -55,7 +56,33 @@ p_values <- function(null_stats, signif = 0.05, method = "fdr") {
 }
 
 
-gap_plot <- function(juniors, inactives, floor, metric, qty, main_table, rating_data) {
+merge_significance <- function(main_table, null_stats, signif = 0.05, method = "fdr") {
+  main_table %>%
+    left_join(p_values(null_stats, signif = signif, method = method),
+              by = join_by(juniors, inactives, floor, metric, fed)) %>%
+    mutate(
+      signif = fct_relevel(signif, "Significant            ")
+    ) %>%
+    pivot_longer(cols = starts_with("y"), names_to = "qty", values_to = "gap")
+}
+
+
+gap_plot <- function(main_table, juniors, inactives, floor, metric, qty, rating_data) {
+  show_col_legend <- qty == "yP" || metric == "sd"
+  color_scaling <- function(show_col_legend) {
+    if (show_col_legend) {
+      scale_color_manual(name = NULL, values = c("firebrick", "gray50"), drop = FALSE)
+    } else {
+      scale_color_manual(name = NULL, values = c("steelblue"))
+    }
+  }
+  color_guide <- function(show_col_legend) {
+    if (show_col_legend) {
+      guides(color = guide_legend(nrow = 1))
+    } else {
+      guides(color = guide_legend(override.aes = list(color = NA)))
+    }
+  }
   main_table %>%
     filter(juniors == {{juniors}}, inactives == {{inactives}}, floor == {{floor}},
            metric == {{metric}}, qty == {{qty}}) %>%
@@ -64,16 +91,17 @@ gap_plot <- function(juniors, inactives, floor, metric, qty, main_table, rating_
                           metric = metric, rating_data),
       by = join_by(fed)
     ) %>%
+    { if (qty == "yP" || metric == "sd") . else mutate(., signif = "") } %>%
     ggplot(aes(x = frac_women, y = gap, color = signif, label = fed)) +
     geom_hline(yintercept = 0, color = "black", alpha = 0.4, linetype = "dashed") +
     geom_text(fontface = "bold") +
-    scale_color_manual(name = NULL, values = c("firebrick", "gray50"), drop = FALSE) +
+    color_scaling(show_col_legend) +
+    color_guide(show_col_legend) +
     scale_x_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
     labs(
       x = "Percentage of players who are women",
       y = expression(paste("Rating gap ", (M - W)))
     ) +
-    guides(color = guide_legend(ncol = 1)) +
     theme_bw(base_size = 16) +
     theme(legend.position = "bottom")
 }
@@ -86,22 +114,18 @@ rating_data <- read_csv("data/rating-data.csv", col_types = "ccciiil") %>%
 null_stats <- read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   filter(fed != "ALL")
 
+age_experience <- read_csv("data/age-experience-tab.csv", col_types = "cllicddddd")
+
 main_table <- null_stats %>%
   filter(stat == "obs") %>%
   rename(y = value) %>%
-  left_join(read_csv("data/age-experience-tab.csv", col_types = "cllicddddd"),
-            by = join_by(metric, juniors, inactives, floor, fed)) %>%
-  select(!c(stat, E, A, weight)) %>%
-  full_join(p_values(null_stats, signif = 0.05, method = "fdr"),
-            by = join_by(juniors, inactives, floor, metric, fed)) %>%
-  mutate(
-    signif = fct_relevel(signif, "Significant under the participation rate hypothesis")
-  ) %>%
-  pivot_longer(cols = starts_with("y"), names_to = "qty", values_to = "gap")
+  left_join(age_experience, by = join_by(metric, juniors, inactives, floor, fed)) %>%
+  select(!stat & !E & !A & !weight)
 
 
 
 ui <- fluidPage(
+  useShinyjs(),
   title = "Chess data explorer",
   titlePanel("Chess data explorer"),
   sidebarLayout(
@@ -133,20 +157,38 @@ ui <- fluidPage(
       radioButtons(
         inputId = "metric",
         label = "Metric:",
-        choiceNames = c("Overall mean gap", "Overall median gap", "Top 10 gap",
+        choiceNames = c("Overall mean gap", "Top 10 gap",
                         "Top 1 gap", "Standard deviation"),
-        choiceValues = c("mean", "median", "top10", "top1", "sd"),
+        choiceValues = c("mean", "top10", "top1", "sd"),
         selected = "mean",
         inline = FALSE
       ),
+      shinyjs::hidden(
+        radioButtons(
+          inputId = "qty",
+          label = "Correction to ratings:",
+          choiceNames = c("None (raw ratings)", "Participation correction",
+                          "Participation, age & experience correction"),
+          choiceValues = c("y", "yP", "yPEA"),
+          selected = "y",
+          inline = FALSE
+        )
+      ),
       radioButtons(
-        inputId = "qty",
-        label = "Correction to ratings:",
-        choiceNames = c("None (raw ratings)", "Participation correction",
-                        "Participation, age & experience correction"),
-        choiceValues = c("y", "yP", "yPEA"),
-        selected = "y",
+        inputId = "method",
+        label = "Correction to multiple testing:",
+        choiceNames = c("None", "False discovery rate", "Bonferroni"),
+        choiceValues = c("none", "fdr", "bonferroni"),
+        selected = "fdr",
         inline = FALSE
+      ),
+      sliderInput(
+        inputId = "signif",
+        label = "Significance threshold:",
+        min = 0.001,
+        max = 0.1,
+        value = 0.05,
+        step = 0.001
       )
     ),
     mainPanel(plotOutput("plot"))
@@ -155,10 +197,26 @@ ui <- fluidPage(
 
 
 server <- function(input, output) {
+
+  input_qty <- reactiveVal(NULL)
+
+  observe({
+    if (input$metric != "sd") {
+      shinyjs::show("qty")
+      input_qty(input$qty)
+    } else {
+      shinyjs::hide("qty")
+      input_qty("y")
+    }
+  })
+
   output$plot <- renderPlot({
-    gap_plot(juniors = input$juniors, inactives = input$inactives, floor = input$floor,
-             metric = input$metric, qty = input$qty, main_table, rating_data)
-  }, width = 500, height = 500)
+    main_table %>%
+      merge_significance(null_stats, signif = input$signif, method = input$method) %>%
+      gap_plot(juniors = input$juniors, inactives = input$inactives, floor = input$floor,
+               metric = input$metric, qty = input_qty(), rating_data)
+  }, width = 500, height = 450)
+
 }
 
 
