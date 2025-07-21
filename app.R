@@ -9,25 +9,25 @@ library(tidyverse)
 restrict_data <- function(rating_data, juniors, inactives, floor,
                           birth_uncertain = FALSE) {
   if (juniors) max_byear <- 2019 else max_byear <- 1999
-  rating_data %>%
-    filter(if (inactives) TRUE else active) %>%
-    filter(if (birth_uncertain) TRUE else !is.na(born)) %>%
+  rating_data |>
+    filter(if (inactives) TRUE else active) |>
+    filter(if (birth_uncertain) TRUE else !is.na(born)) |>
     filter(born <= max_byear | is.na(born), rating >= floor)
 }
 
 
 participation_gap <- function(rating_data) {
-  rating_data %>%
-    count(fed, sex, name = "no_of_players") %>%
-    pivot_wider(names_from = "sex", values_from = "no_of_players", values_fill = 0) %>%
+  rating_data |>
+    count(fed, sex, name = "no_of_players") |>
+    pivot_wider(names_from = "sex", values_from = "no_of_players", values_fill = 0) |>
     mutate(frac_women = `F` / (`F` + `M`))
 }
 
 
 stats_participation <- function(juniors, inactives, floor, metric, rating_data) {
-  rating_data %>%
+  rating_data |>
     restrict_data(juniors == {{juniors}}, inactives == {{inactives}},
-                  floor == {{floor}}) %>%
+                  floor == {{floor}}) |>
     participation_gap()
 }
 
@@ -50,22 +50,36 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
 
 
 p_values <- function(null_stats, signif = 0.05, method = "fdr") {
-  null_stats %>%
-    filter(stat == "ptpval") %>%
+  null_stats |>
+    filter(stat == "ptpval") |>
     mutate(signif = p_anal(value, signif, method),
-           .by = c(juniors, inactives, floor, metric)) %>%
+           .by = c(juniors, inactives, floor, metric)) |>
     select(!stat & !value)
 }
 
 
 merge_significance <- function(main_table, null_stats, signif = 0.05, method = "fdr") {
-  main_table %>%
+  main_table |>
     left_join(p_values(null_stats, signif = signif, method = method),
-              by = join_by(juniors, inactives, floor, metric, fed)) %>%
+              by = join_by(juniors, inactives, floor, metric, fed)) |>
     mutate(
       signif = fct_relevel(signif, "Significant            ")
-    ) %>%
+    ) |>
     pivot_longer(cols = starts_with("y"), names_to = "qty", values_to = "gap")
+}
+
+
+simple_stats <- function(stat_tab, with_significance) {
+  n_pos <- filter(stat_tab, pos) |> pull(n) |> sum()
+  n_neg <- filter(stat_tab, !pos) |> pull(n) |> sum()
+  pos_sig <- filter(stat_tab, pos & sig) |> pull(n)
+  neg_sig <- filter(stat_tab, !pos & sig) |> pull(n)
+  pos_sig_str <- if (with_significance) str_c("(", pos_sig, " significant)") else ""
+  neg_sig_str <- if (with_significance) str_c("(", neg_sig, " significant)") else ""
+  HTML(str_c(
+    "Positive gap in ", n_pos, " federations ", pos_sig_str, "<br>",
+    "Negative gap in ", n_neg, " federations ", neg_sig_str
+  ))
 }
 
 
@@ -105,22 +119,14 @@ create_ylab <- function(metric, qty) {
 
 gap_plot <- function(main_table, juniors, inactives, floor, metric, qty, rating_data) {
   show_col_legend <- qty == "yP" || metric == "sd"
-  main_table %>%
-    filter(juniors == {{juniors}}, inactives == {{inactives}}, floor == {{floor}},
-           metric == {{metric}}, qty == {{qty}}) %>%
-    left_join(
-      stats_participation(juniors = juniors, inactives = inactives, floor = floor,
-                          metric = metric, rating_data),
-      by = join_by(fed)
-    ) %>%
-    { if (qty == "yP" || metric == "sd") . else mutate(., signif = "") } %>%
+  main_table |>
     ggplot(aes(x = frac_women, y = gap, color = signif, label = fed)) +
     geom_hline(yintercept = 0, color = "black", alpha = 0.4, linetype = "dashed") +
     geom_text(fontface = "bold") +
     color_scaling(show_col_legend) +
     color_guide(show_col_legend) +
     scale_x_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
-    labs(x = "Percentage of players who are women", y = create_ylab(metric, qty)) +
+    labs(x = "Percentage of female players", y = create_ylab(metric, qty)) +
     theme_bw(base_size = 16) +
     theme(legend.position = "bottom")
 }
@@ -129,18 +135,17 @@ gap_plot <- function(main_table, juniors, inactives, floor, metric, qty, rating_
 
 # Load and organize data ----------------------------------------------------------------
 
-rating_data <- read_csv("data/rating-data.csv", col_types = "ccciiil") %>%
+rating_data <- read_csv("data/rating-data.csv", col_types = "ccciiil") |>
   restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000)
 
-null_stats <- read_csv("data/null-stats.csv", col_types = "llicccd") %>%
+null_stats <- read_csv("data/null-stats.csv", col_types = "llicccd") |>
   filter(fed != "ALL")
 
-age_experience <- read_csv("data/age-experience-tab.csv", col_types = "cllicddddd")
-
-main_table <- null_stats %>%
-  filter(stat == "obs") %>%
-  rename(y = value) %>%
-  left_join(age_experience, by = join_by(metric, juniors, inactives, floor, fed)) %>%
+main_table <- null_stats |>
+  filter(stat == "obs") |>
+  rename(y = value) |>
+  left_join(read_csv("data/age-experience-tab.csv", col_types = "cllicddddd"),
+            by = join_by(metric, juniors, inactives, floor, fed)) |>
   select(!stat & !E & !A & !weight)
 
 
@@ -212,14 +217,32 @@ ui <- fluidPage(
         step = 0.001
       )
     ),
-    mainPanel(plotOutput("plot"))
+    mainPanel(
+      plotOutput("plot"),
+      br(), br(), br(),
+      htmlOutput("stats")
+    )
   )
 )
 
 
 server <- function(input, output) {
 
-  input_qty <- reactiveVal(NULL)
+  dat <- reactive(
+    main_table |>
+      merge_significance(null_stats, signif = input$signif, method = input$method) |>
+      filter(juniors == input$juniors, inactives == input$inactives,
+             floor == input$floor, metric == input$metric, qty == input_qty()) |>
+      left_join(
+        stats_participation(juniors = input$juniors, inactives = input$inactives,
+                            floor = input$floor, metric = input$metric, rating_data),
+        by = join_by(fed)
+      ) |>
+      (\(.) if (input_qty() == "yP" || input$metric == "sd") . else
+        mutate(., signif = ""))()
+  )
+
+  input_qty <- reactiveVal(value = "y")
 
   observe({
     # Disable the "Correction to ratings" radio buttons if the desired metric is "sd":
@@ -240,12 +263,18 @@ server <- function(input, output) {
   })
 
   output$plot <- renderPlot({
-    main_table %>%
-      merge_significance(null_stats, signif = input$signif, method = input$method) %>%
-      gap_plot(juniors = input$juniors, inactives = input$inactives, floor = input$floor,
-               metric = input$metric, qty = input_qty(), rating_data)
+    gap_plot(dat(), juniors = input$juniors, inactives = input$inactives,
+             floor = input$floor, metric = input$metric, qty = input_qty(), rating_data)
   }, width = 500, height = 450)
 
+  output$stats <- renderText({
+    stat_tab <- dat() |>
+      count(pos = gap > 0, sig = signif != "Not significant") |>
+      full_join(crossing(pos = c(FALSE, TRUE), sig = c(FALSE, TRUE)),
+                by = join_by(pos, sig)) |>
+      mutate(n = ifelse(is.na(n), 0, n)) |>
+      simple_stats(with_significance = dat()$signif[1] != "")
+  })
 }
 
 
