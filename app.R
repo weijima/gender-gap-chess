@@ -3,6 +3,9 @@ library(shinyjs)
 library(tidyverse)
 
 
+
+# Utility functions ---------------------------------------------------------------------
+
 restrict_data <- function(rating_data, juniors, inactives, floor,
                           birth_uncertain = FALSE) {
   if (juniors) max_byear <- 2019 else max_byear <- 1999
@@ -46,7 +49,6 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
 }
 
 
-# Table of (corrected) significances for each federation:
 p_values <- function(null_stats, signif = 0.05, method = "fdr") {
   null_stats %>%
     filter(stat == "ptpval") %>%
@@ -67,22 +69,42 @@ merge_significance <- function(main_table, null_stats, signif = 0.05, method = "
 }
 
 
+color_scaling <- function(show_col_legend) {
+  if (show_col_legend) {
+    scale_color_manual(name = NULL, values = c("firebrick", "gray50"), drop = FALSE)
+  } else {
+    scale_color_manual(name = NULL, values = c("steelblue"))
+  }
+}
+
+
+color_guide <- function(show_col_legend) {
+  if (show_col_legend) {
+    guides(color = guide_legend(nrow = 1))
+  } else {
+    guides(color = guide_legend(override.aes = list(color = NA)))
+  }
+}
+
+
+create_ylab <- function(metric, qty) {
+  ylab_qty <- case_when(
+    qty == "y"    ~ "Uncorrected",
+    qty == "yP"   ~ "P-corrected",
+    qty == "yPEA" ~ "PEA-corrected"
+  )
+  ylab_metric <- case_when(
+    metric == "mean"  ~ paste(ylab_qty, "overall mean gap"),
+    metric == "top10" ~ paste(ylab_qty, "top 10 gap"),
+    metric == "top1"  ~ paste(ylab_qty, "top 1 gap"),
+    metric == "sd"    ~ "Gap in standard deviations"
+  )
+  bquote(.(ylab_metric) ~ (M - W))
+}
+
+
 gap_plot <- function(main_table, juniors, inactives, floor, metric, qty, rating_data) {
   show_col_legend <- qty == "yP" || metric == "sd"
-  color_scaling <- function(show_col_legend) {
-    if (show_col_legend) {
-      scale_color_manual(name = NULL, values = c("firebrick", "gray50"), drop = FALSE)
-    } else {
-      scale_color_manual(name = NULL, values = c("steelblue"))
-    }
-  }
-  color_guide <- function(show_col_legend) {
-    if (show_col_legend) {
-      guides(color = guide_legend(nrow = 1))
-    } else {
-      guides(color = guide_legend(override.aes = list(color = NA)))
-    }
-  }
   main_table %>%
     filter(juniors == {{juniors}}, inactives == {{inactives}}, floor == {{floor}},
            metric == {{metric}}, qty == {{qty}}) %>%
@@ -98,15 +120,14 @@ gap_plot <- function(main_table, juniors, inactives, floor, metric, qty, rating_
     color_scaling(show_col_legend) +
     color_guide(show_col_legend) +
     scale_x_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
-    labs(
-      x = "Percentage of players who are women",
-      y = expression(paste("Rating gap ", (M - W)))
-    ) +
+    labs(x = "Percentage of players who are women", y = create_ylab(metric, qty)) +
     theme_bw(base_size = 16) +
     theme(legend.position = "bottom")
 }
 
 
+
+# Load and organize data ----------------------------------------------------------------
 
 rating_data <- read_csv("data/rating-data.csv", col_types = "ccciiil") %>%
   restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000)
@@ -123,6 +144,8 @@ main_table <- null_stats %>%
   select(!stat & !E & !A & !weight)
 
 
+
+# Shiny app -----------------------------------------------------------------------------
 
 ui <- fluidPage(
   useShinyjs(),
@@ -163,16 +186,14 @@ ui <- fluidPage(
         selected = "mean",
         inline = FALSE
       ),
-      shinyjs::hidden(
-        radioButtons(
-          inputId = "qty",
-          label = "Correction to ratings:",
-          choiceNames = c("None (raw ratings)", "Participation correction",
-                          "Participation, age & experience correction"),
-          choiceValues = c("y", "yP", "yPEA"),
-          selected = "y",
-          inline = FALSE
-        )
+      radioButtons(
+        inputId = "qty",
+        label = "Correction to ratings:",
+        choiceNames = c("None (raw ratings)", "Participation correction",
+                        "Participation, age & experience correction"),
+        choiceValues = c("y", "yP", "yPEA"),
+        selected = "y",
+        inline = FALSE
       ),
       radioButtons(
         inputId = "method",
@@ -201,12 +222,20 @@ server <- function(input, output) {
   input_qty <- reactiveVal(NULL)
 
   observe({
+    # Disable the "Correction to ratings" radio buttons if the desired metric is "sd":
     if (input$metric != "sd") {
-      shinyjs::show("qty")
+      shinyjs::enable("qty")
       input_qty(input$qty)
     } else {
-      shinyjs::hide("qty")
+      shinyjs::disable("qty")
       input_qty("y")
+    }
+    # Only enable "Correction to multiple testing" if (i) looking at P-corrected data,
+    # or (ii) looking at the "sd" metric:
+    if (input$qty == "yP" || input$metric == "sd") {
+      shinyjs::enable("method")
+    } else {
+      shinyjs::disable("method")
     }
   })
 
