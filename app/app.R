@@ -108,7 +108,7 @@ gap_plot <- function(main_tab, metric, qty, rating_data) {
   main_tab |>
     add_case(signif = "Significant", .before = 1) |>
     mutate(signif = as_factor(ifelse(signif == "Significant",
-                                     "Significant                         ",
+                                     "Significant                    ",
                                      signif))) |>
     slice(-1) |>
     ggplot(aes(x = frac_women, y = gap, color = signif, label = fed)) +
@@ -117,7 +117,7 @@ gap_plot <- function(main_tab, metric, qty, rating_data) {
     color_scaling(show_col_legend) +
     color_guide(show_col_legend) +
     scale_x_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
-    labs(x = "Percentage of female players", y = create_ylab(metric, qty)) +
+    labs(x = "Percentage of players who are women", y = create_ylab(metric, qty)) +
     theme_bw(base_size = 16) +
     theme(legend.position = "bottom")
 }
@@ -263,7 +263,7 @@ server <- function(input, output) {
 
   output$plot <- renderPlot({
     gap_plot(dat(), metric = input$metric, qty = input_qty(), rating_data)
-  }, width = 500, height = 450)
+  }, width = 550, height = 450)
 
   output$stats <- renderText({
     simple_stats(dat())
@@ -276,7 +276,7 @@ server <- function(input, output) {
       mutate(pval = round(pval, 4)) |>
       mutate(pval = if (with_pval) pval else NA_real_) |>
       mutate(gap = round(gap, 2)) |>
-      rename(federation = fed, women = `F`, men = `M`,
+      rename(federation = fed, `no. of women` = `F`, `no. of men` = `M`,
              `rating gap` = gap, `p-value` = pval)
   })
 }
