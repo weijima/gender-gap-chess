@@ -1,5 +1,4 @@
 library(shiny)
-library(shinyjs)
 library(tidyverse)
 
 
@@ -42,43 +41,30 @@ p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
   s <- signif_female + signif_male
   # Translate the arbitrary symbols 2 and 1 into test describing significance:
   case_when(
-    s %in% 1:2 ~ "Significant            ",
+    s %in% 1:2 ~ "Significant",
     s == 0 ~ "Not significant",
     .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
   )
 }
 
 
-p_values <- function(null_stats, signif = 0.05, method = "fdr") {
-  null_stats |>
-    filter(stat == "ptpval") |>
-    mutate(signif = p_anal(value, signif, method),
-           .by = c(juniors, inactives, floor, metric)) |>
-    select(!stat & !value)
-}
-
-
-merge_significance <- function(main_table, null_stats, signif = 0.05, method = "fdr") {
-  main_table |>
-    left_join(p_values(null_stats, signif = signif, method = method),
-              by = join_by(juniors, inactives, floor, metric, fed)) |>
-    mutate(
-      signif = fct_relevel(signif, "Significant            ")
-    ) |>
-    pivot_longer(cols = starts_with("y"), names_to = "qty", values_to = "gap")
-}
-
-
-simple_stats <- function(stat_tab, with_significance) {
+simple_stats <- function(tab) {
+  mean_gap <- round(mean(tab$gap), 1)
+  stat_tab <- tab |>
+    count(pos = gap > 0, sig = signif == "Significant") |>
+    full_join(crossing(pos = c(FALSE, TRUE), sig = c(FALSE, TRUE)),
+              by = join_by(pos, sig)) |>
+    mutate(n = ifelse(is.na(n), 0, n))
   n_pos <- filter(stat_tab, pos) |> pull(n) |> sum()
   n_neg <- filter(stat_tab, !pos) |> pull(n) |> sum()
   pos_sig <- filter(stat_tab, pos & sig) |> pull(n)
   neg_sig <- filter(stat_tab, !pos & sig) |> pull(n)
-  pos_sig_str <- if (with_significance) str_c("(", pos_sig, " significant)") else ""
-  neg_sig_str <- if (with_significance) str_c("(", neg_sig, " significant)") else ""
+  pos_sig_str <- if (tab$signif[1] != "") str_c("(", pos_sig, " significant)") else ""
+  neg_sig_str <- if (tab$signif[1] != "") str_c("(", neg_sig, " significant)") else ""
   HTML(str_c(
-    "Positive gap in ", n_pos, " federations ", pos_sig_str, "<br>",
-    "Negative gap in ", n_neg, " federations ", neg_sig_str
+    "• Positive gap: ", n_pos, " federations ", pos_sig_str, "<br>",
+    "• Negative gap: ", n_neg, " federations ", neg_sig_str, "<br>",
+    "• Average gap across all federations: ", sprintf("%.1f", mean_gap)
   ))
 }
 
@@ -94,9 +80,9 @@ color_scaling <- function(show_col_legend) {
 
 color_guide <- function(show_col_legend) {
   if (show_col_legend) {
-    guides(color = guide_legend(nrow = 1))
+    guides(color = guide_legend(nrow = 1), label = "none")
   } else {
-    guides(color = guide_legend(override.aes = list(color = NA)))
+    guides(color = guide_legend(override.aes = list(color = NA, shape = utf8ToInt("N"))))
   }
 }
 
@@ -117,9 +103,14 @@ create_ylab <- function(metric, qty) {
 }
 
 
-gap_plot <- function(main_table, juniors, inactives, floor, metric, qty, rating_data) {
+gap_plot <- function(main_tab, metric, qty, rating_data) {
   show_col_legend <- qty == "yP" || metric == "sd"
-  main_table |>
+  main_tab |>
+    add_case(signif = "Significant", .before = 1) |>
+    mutate(signif = as_factor(ifelse(signif == "Significant",
+                                     "Significant                         ",
+                                     signif))) |>
+    slice(-1) |>
     ggplot(aes(x = frac_women, y = gap, color = signif, label = fed)) +
     geom_hline(yintercept = 0, color = "black", alpha = 0.4, linetype = "dashed") +
     geom_text(fontface = "bold") +
@@ -142,20 +133,22 @@ null_stats <- read_csv("data/null-stats.csv", col_types = "llicccd") |>
   filter(fed != "ALL")
 
 main_table <- null_stats |>
-  filter(stat == "obs") |>
-  rename(y = value) |>
+  filter(stat %in% c("obs", "ptpval")) |>
+  pivot_wider(names_from = stat, values_from = value) |>
+  rename(y = obs, pval = ptpval) |>
+  relocate(y, .after = pval) |>
   left_join(read_csv("data/age-experience-tab.csv", col_types = "cllicddddd"),
             by = join_by(metric, juniors, inactives, floor, fed)) |>
-  select(!stat & !E & !A & !weight)
+  select(!E & !A & !weight)
 
 
 
 # Shiny app -----------------------------------------------------------------------------
 
 ui <- fluidPage(
-  useShinyjs(),
+  shinyjs::useShinyjs(),
   title = "Chess data explorer",
-  titlePanel("Chess data explorer"),
+  titlePanel("Deconstructing the gender gap in chess ratings: data explorer"),
   sidebarLayout(
     sidebarPanel(
       radioButtons(
@@ -197,7 +190,7 @@ ui <- fluidPage(
         choiceNames = c("None (raw ratings)", "Participation correction",
                         "Participation, age & experience correction"),
         choiceValues = c("y", "yP", "yPEA"),
-        selected = "y",
+        selected = "yP",
         inline = FALSE
       ),
       radioButtons(
@@ -219,8 +212,10 @@ ui <- fluidPage(
     ),
     mainPanel(
       plotOutput("plot"),
-      br(), br(), br(),
-      htmlOutput("stats")
+      br(), br(), hr(),
+      htmlOutput("stats"),
+      hr(),
+      DT::DTOutput("table")
     )
   )
 )
@@ -230,7 +225,10 @@ server <- function(input, output) {
 
   dat <- reactive(
     main_table |>
-      merge_significance(null_stats, signif = input$signif, method = input$method) |>
+      mutate(signif = p_anal(pval, signif = input$signif, method = input$method),
+             .after = pval,
+             .by = c(juniors, inactives, floor, metric)) |>
+      pivot_longer(cols = starts_with("y"), names_to = "qty", values_to = "gap") |>
       filter(juniors == input$juniors, inactives == input$inactives,
              floor == input$floor, metric == input$metric, qty == input_qty()) |>
       left_join(
@@ -263,20 +261,24 @@ server <- function(input, output) {
   })
 
   output$plot <- renderPlot({
-    gap_plot(dat(), juniors = input$juniors, inactives = input$inactives,
-             floor = input$floor, metric = input$metric, qty = input_qty(), rating_data)
+    gap_plot(dat(), metric = input$metric, qty = input_qty(), rating_data)
   }, width = 500, height = 450)
 
   output$stats <- renderText({
-    stat_tab <- dat() |>
-      count(pos = gap > 0, sig = signif != "Not significant") |>
-      full_join(crossing(pos = c(FALSE, TRUE), sig = c(FALSE, TRUE)),
-                by = join_by(pos, sig)) |>
-      mutate(n = ifelse(is.na(n), 0, n)) |>
-      simple_stats(with_significance = dat()$signif[1] != "")
+    simple_stats(dat())
+  })
+
+  output$table <- DT::renderDT({
+    with_pval <- dat()$signif[1] != ""
+    dat() |>
+      select(fed, `F`, `M`, gap, pval) |>
+      mutate(pval = round(pval, 4)) |>
+      mutate(pval = if (with_pval) pval else NA_real_) |>
+      mutate(gap = round(gap, 2)) |>
+      rename(federation = fed, women = `F`, men = `M`,
+             `rating gap` = gap, `p-value` = pval)
   })
 }
 
 
 shinyApp(ui = ui, server = server)
-
