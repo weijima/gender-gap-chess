@@ -32,19 +32,7 @@ stats_participation <- function(juniors, inactives, floor, metric, rating_data) 
 
 
 p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
-  p_female <- p.adjust(1 - pvalues, method = method)
-  p_male <- p.adjust(pvalues, method = method)
-  # The factor of 2 simply introduces a symbol to distinguish women (2) from men (1):
-  signif_female <- 2L * (p_female < signif / 2)
-  signif_male <- 1L * (p_male < signif / 2)
-  # The nonzero entries of signif_female and signif_male are completely nonoverlapping:
-  s <- signif_female + signif_male
-  # Translate the arbitrary symbols 2 and 1 into test describing significance:
-  case_when(
-    s %in% 1:2 ~ "Significant",
-    s == 0 ~ "Not significant",
-    .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
-  )
+  ifelse(p.adjust(pvalues, method = method) < signif, "Significant", "not Significant")
 }
 
 
@@ -140,7 +128,8 @@ main_table <- null_stats |>
   rename(y = obs, pval = ptpval) |>
   relocate(y, .after = pval) |>
   left_join(age_experience, by = join_by(metric, juniors, inactives, floor, fed)) |>
-  select(!E & !A & !weight)
+  select(!E & !A & !weight) |>
+  mutate(pval = 2 * pmin(pval, 1 - pval))
 
 
 
@@ -216,7 +205,7 @@ ui <- fluidPage(
       br(), br(), hr(),
       htmlOutput("stats"),
       hr(),
-      DT::DTOutput("table")
+      fluidRow(column(DT::DTOutput("table", width = "auto"), width = 7))
     )
   )
 )
