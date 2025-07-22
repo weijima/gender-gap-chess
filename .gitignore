@@ -9,6 +9,4 @@
 *.synctex.gz
 *.html
 .Rproj.user
-/data/large_data
-/data/permdat
-/interactive
+rsconnect*

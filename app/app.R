@@ -126,19 +126,20 @@ gap_plot <- function(main_tab, metric, qty, rating_data) {
 
 # Load and organize data ----------------------------------------------------------------
 
-rating_data <- read_csv("data/rating-data.csv", col_types = "ccciiil") |>
+rating_data <- read_rds("rating-data.rds") |>
   restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000)
 
-null_stats <- read_csv("data/null-stats.csv", col_types = "llicccd") |>
+null_stats <- read_rds("null-stats.rds") |>
   filter(fed != "ALL")
+
+age_experience <- read_rds("age-experience-tab.rds")
 
 main_table <- null_stats |>
   filter(stat %in% c("obs", "ptpval")) |>
   pivot_wider(names_from = stat, values_from = value) |>
   rename(y = obs, pval = ptpval) |>
   relocate(y, .after = pval) |>
-  left_join(read_csv("data/age-experience-tab.csv", col_types = "cllicddddd"),
-            by = join_by(metric, juniors, inactives, floor, fed)) |>
+  left_join(age_experience, by = join_by(metric, juniors, inactives, floor, fed)) |>
   select(!E & !A & !weight)
 
 
