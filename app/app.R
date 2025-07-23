@@ -56,7 +56,8 @@ color_scaling <- function(show_col_legend) {
   if (show_col_legend) {
     scale_color_manual(name = NULL, values = c("firebrick", "gray50"), drop = FALSE)
   } else {
-    scale_color_manual(name = NULL, values = c("steelblue"))
+    scale_color_manual(name = NULL, values = c("steelblue", "steelblue"),
+                       labels = c("", ""))
   }
 }
 
@@ -65,7 +66,7 @@ color_guide <- function(show_col_legend) {
   if (show_col_legend) {
     guides(color = guide_legend(nrow = 1), label = "none")
   } else {
-    guides(color = guide_legend(override.aes = list(color = NA, shape = utf8ToInt("N"))))
+    guides(color = guide_legend(override.aes = list(color = NA)))
   }
 }
 
@@ -103,6 +104,28 @@ gap_plot <- function(main_tab, metric, qty, rating_data) {
     labs(x = "Percentage of players who are women", y = create_ylab(metric, qty)) +
     theme_bw(base_size = 16) +
     theme(legend.position = "bottom")
+}
+
+
+renderDocUI <- function(documentationPath, panelID = "doc", header = "Documentation") {
+  renderUI({
+    if (file.exists(documentationPath)) {
+      docText <- readLines(documentationPath, warn = FALSE, encoding = "UTF-8")
+      docHTML <- markdown::markdownToHTML(
+        text = paste(docText, collapse = "\n"), fragment.only = TRUE
+      )
+      shinyBS::bsCollapse(
+        id = panelID,
+        shinyBS::bsCollapsePanel(title = header, value = "open", HTML(docHTML))
+      )
+    } else {
+      shinyBS::bsCollapse(
+        id = panelID,
+        shinyBS::bsCollapsePanel(title = header,
+                                 HTML("<p><em>Documentation not found.</em></p>"))
+      )
+    }
+  })
 }
 
 
@@ -187,7 +210,7 @@ ui <- fluidPage(
         inline = FALSE
       ),
       sliderInput(
-        inputId = "signif",
+        inputId = "alpha",
         label = "Significance threshold:",
         min = 0.001,
         max = 0.1,
@@ -196,6 +219,7 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
+      uiOutput("documentation"),
       plotOutput("plot"),
       br(), br(), hr(),
       htmlOutput("stats"),
@@ -218,10 +242,10 @@ server <- function(input, output) {
                             floor = input$floor, metric = input$metric, rating_data),
         by = join_by(fed)
       ) |>
-      (\(.) if (input_qty() == "yP" || input$metric == "sd") . else
-        mutate(., signif = ""))() |>
       mutate(pval = p.adjust(pval, method = input$method)) |>
-      mutate(signif = ifelse(pval < input$signif, "Significant", "Not significant"))
+      mutate(signif = ifelse(pval < input$alpha, "Significant", "Not significant")) |>
+      (\(.) if (input_qty() == "yP" || input$metric == "sd") . else
+        mutate(., signif = ""))()
   )
 
   input_qty <- reactiveVal(value = "y")
@@ -235,14 +259,18 @@ server <- function(input, output) {
       shinyjs::disable("qty")
       input_qty("y")
     }
-    # Only enable "Correction to multiple testing" if (i) looking at P-corrected data,
-    # or (ii) looking at the "sd" metric:
+    # Only enable "Correction to multiple testing" and "Significance threshold" if
+    # (i) looking at P-corrected data, or (ii) looking at the "sd" metric:
     if (input$qty == "yP" || input$metric == "sd") {
       shinyjs::enable("method")
+      shinyjs::enable("alpha")
     } else {
       shinyjs::disable("method")
+      shinyjs::disable("alpha")
     }
   })
+
+  output$documentation <- renderDocUI("documentation.md")
 
   output$plot <- renderPlot({
     gap_plot(dat(), metric = input$metric, qty = input_qty(), rating_data)
