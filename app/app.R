@@ -31,11 +31,6 @@ stats_participation <- function(juniors, inactives, floor, metric, rating_data) 
 }
 
 
-p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
-  ifelse(p.adjust(pvalues, method = method) < signif, "Significant", "not Significant")
-}
-
-
 simple_stats <- function(tab) {
   mean_gap <- round(mean(tab$gap), 1)
   stat_tab <- tab |>
@@ -185,9 +180,9 @@ ui <- fluidPage(
       ),
       radioButtons(
         inputId = "method",
-        label = "Correction to multiple testing:",
-        choiceNames = c("None", "False discovery rate", "Bonferroni"),
-        choiceValues = c("none", "fdr", "bonferroni"),
+        label = "Adjustment to p-values:",
+        choiceNames = c("None", "False discovery rate", "Holm"),
+        choiceValues = c("none", "fdr", "holm"),
         selected = "fdr",
         inline = FALSE
       ),
@@ -215,9 +210,6 @@ server <- function(input, output) {
 
   dat <- reactive(
     main_table |>
-      mutate(signif = p_anal(pval, signif = input$signif, method = input$method),
-             .after = pval,
-             .by = c(juniors, inactives, floor, metric)) |>
       pivot_longer(cols = starts_with("y"), names_to = "qty", values_to = "gap") |>
       filter(juniors == input$juniors, inactives == input$inactives,
              floor == input$floor, metric == input$metric, qty == input_qty()) |>
@@ -227,7 +219,9 @@ server <- function(input, output) {
         by = join_by(fed)
       ) |>
       (\(.) if (input_qty() == "yP" || input$metric == "sd") . else
-        mutate(., signif = ""))()
+        mutate(., signif = ""))() |>
+      mutate(pval = p.adjust(pval, method = input$method)) |>
+      mutate(signif = ifelse(pval < input$signif, "Significant", "Not significant"))
   )
 
   input_qty <- reactiveVal(value = "y")
