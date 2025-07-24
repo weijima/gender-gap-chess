@@ -1,34 +1,30 @@
 library(tidyverse)
 
 
-p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
-  p_female <- p.adjust(1 - pvalues, method = method)
-  p_male <- p.adjust(pvalues, method = method)
-  # The factor of 2 simply introduces a symbol to distinguish women (2) from men (1):
-  signif_female <- 2L * (p_female < signif / 2)
-  signif_male <- 1L * (p_male < signif / 2)
-  # The nonzero entries of signif_female and signif_male are completely nonoverlapping:
-  s <- signif_female + signif_male
-  # Translate the arbitrary symbols 2 and 1 into test describing significance:
+signif_anal <- function(pvalues, raw_pvalues, signif = 0.05) {
   case_when(
-    s == 2 ~ "female-slanted",
-    s == 1 ~ "male-slanted",
-    s == 0 ~ "nonsignificant",
-    .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
+    pvalues <  signif & raw_pvalues >= 0.5 ~ "female-slanted",
+    pvalues <  signif & raw_pvalues <  0.5 ~ "male-slanted",
+    pvalues >= signif                      ~ "nonsignificant"
   )
 }
 
 
-# Table of raw p-values, along with the corrected significance for each federation:
-pvalues <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+# Table of p-values, along with the corrected significance for each federation:
+pvalues <- read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   filter(fed != "ALL", stat == "ptpval") %>%
-  select(-stat) %>%
-  mutate(fdr = p_anal(value),
-         none = p_anal(value, method = "none"),
+  select(!stat) %>%
+  # Convert two-sided p-values to one-sided:
+  mutate(pval = 2 * pmin(value, 1 - value)) %>%
+  # Adjust p-values for multiple comparisons:
+  mutate(adj_pval = p.adjust(pval, method = "fdr"),
          .by = c(juniors, inactives, floor, metric)) %>%
+  # Assess significance:
+  mutate(fdr = signif_anal(adj_pval, value),
+         none = signif_anal(pval, value)) %>%
   pivot_longer(cols = c(fdr, none), names_to = "method", values_to = "signif")
 
-# Generate Table 2 from the manuscript:
+# Generate federation-significance table:
 pvalues %>%
   summarise(n = n(), .by = c(juniors, inactives, floor, metric, method, signif)) %>%
   mutate(feds = sum(n), .by = c(juniors, inactives, floor, method, metric)) %>%
@@ -36,7 +32,7 @@ pvalues %>%
   mutate(juniors = ifelse(juniors, "Yes", "No"),
          inactives = ifelse(inactives, "Yes", "No"),
          s = `female-slanted` + `male-slanted`) %>%
-  select(-contains("-")) %>%
+  select(!contains("-")) %>%
   summarise(sig = str_c(s[method == "none"]," (", s[method == "fdr"], ")"),
             .by = c(juniors, inactives, floor, feds, metric)) %>%
   mutate(metric = str_to_title(metric),
@@ -47,10 +43,10 @@ pvalues %>%
          `No. of federations` = feds, `Rating floor` = floor) %>%
   knitr::kable(format = "latex")
 
-# Sample part of the data:
+# The data in terms of percentage of significant federations:
 pvalues %>%
-  filter(!juniors, !inactives, floor == 1400, method == "fdr") %>%
   summarise(n = n(), .by = c(juniors, inactives, floor, metric, method, signif)) %>%
   mutate(n = n / sum(n), .by = c(juniors, inactives, floor, metric, method)) %>%
   mutate(n = str_c(round(100 * n, 2), "%")) %>%
-  pivot_wider(names_from = signif, values_from = n, values_fill = "0%")
+  pivot_wider(names_from = signif, values_from = n, values_fill = "0%") %>%
+  filter(method == "fdr")

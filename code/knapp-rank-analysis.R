@@ -46,7 +46,7 @@ global_anal <-
     K = c(1L, 10L)
   ) %>%
   mutate(
-    pval = pmap_dbl(
+    raw_pval = pmap_dbl(
       list(juniors, inactives, floor, K),
       \(juniors, inactives, floor, K) {
         rating_data %>%
@@ -58,9 +58,8 @@ global_anal <-
   )
 
 global_anal %>%
-  mutate(pval_trans = 2 * pmin(pval, 1 - pval)) %>%
-  mutate(adj_pval = p.adjust(pval_trans, method = "fdr")) %>%
-  arrange(desc(adj_pval)) %>%
+  mutate(pval = 2 * pmin(raw_pval, 1 - raw_pval)) %>%
+  arrange(desc(pval)) %>%
   print(n = Inf)
 
 
@@ -72,7 +71,7 @@ per_fed_anal <-
   filter(fed != "ALL") %>%
   crossing(K = c(1L, 10L)) %>%
   mutate(
-    pval = pmap_dbl(
+    raw_pval = pmap_dbl(
       list(juniors, inactives, floor, fed, K),
       \(juniors, inactives, floor, f, K) {
         rating_data %>%
@@ -85,18 +84,18 @@ per_fed_anal <-
   )
 
 per_fed_anal %>%
-  mutate(pval_trans = 2 * pmin(pval, 1 - pval)) %>%
-  mutate(adj_pval = p.adjust(pval_trans, method = "fdr"),
+  mutate(pval = 2 * pmin(raw_pval, 1 - raw_pval)) %>%
+  mutate(adj_pval = p.adjust(pval, method = "fdr"),
          .by = c(juniors, inactives, floor, K)) %>%
   summarize(
     # Number of federations (with at least 30-30 players):
     federations = n(),
     # Number of federations where women are significantly stronger:
-    signif_F = sum(adj_pval < 0.05 & pval >  0.5),
+    signif_F = sum(adj_pval < 0.05 & raw_pval >  0.5),
     # Number of federations where men are significantly stronger:
-    signif_M = sum(adj_pval < 0.05 & pval <= 0.5),
+    signif_M = sum(adj_pval < 0.05 & raw_pval <= 0.5),
     # In which federation(s) are women stronger than men?
-    feds_F = str_flatten_comma(fed[adj_pval < 0.05 & pval > 0.5]),
+    feds_F = str_flatten_comma(fed[adj_pval < 0.05 & raw_pval > 0.5]),
     .by = c(juniors, inactives, floor, K)
   ) %>%
   mutate(feds_F = ifelse(feds_F == "", "-", feds_F)) %>%

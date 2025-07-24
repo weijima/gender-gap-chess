@@ -1,61 +1,44 @@
 library(tidyverse)
 
 
-p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
-  p_female <- p.adjust(1 - pvalues, method = method)
-  p_male <- p.adjust(pvalues, method = method)
-  # The factor of 2 simply introduces a symbol to distinguish women (2) from men (1):
-  signif_female <- 2L * (p_female < signif / 2)
-  signif_male <- 1L * (p_male < signif / 2)
-  # The nonzero entries of signif_female and signif_male are completely nonoverlapping:
-  s <- signif_female + signif_male
-  # Translate the arbitrary symbols 2 and 1 into test describing significance:
-  case_when(
-    s %in% 1:2 ~ "Significant",
-    s == 0 ~ "Non-significant",
-    .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
-  )
+human_readable_labels <- function(data) {
+  data %>%
+    mutate(metric = case_when(
+      metric == "mean" ~ "Overall mean gap",
+      metric == "top10" ~ "Top 10 gap",
+      metric == "top1" ~ "Top 1 gap "
+    )) %>%
+    mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
+    mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
+    mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
+    mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
+    mutate(filter = fct_relevel(
+      filter,
+      "With juniors, w/o inactives",
+      "With juniors, with inactives",
+      "W/o juniors, with inactives",
+      "W/o juniors, w/o inactives"
+    ))
 }
 
 
-# Table of raw p-values, along with the corrected significance for each federation:
-p_values <- function(null_data = "data/null-stats.csv") {
-  read_csv(null_data, show_col_types = FALSE) %>%
-    filter(fed != "ALL", stat == "ptpval") %>%
-    select(-stat) %>%
-    mutate(fdr = p_anal(value),
-           none = p_anal(value, method = "none"),
-           .by = c(juniors, inactives, floor, metric))
-}
-
-
-read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
-  filter(fed != "ALL", stat == "obs") %>%
-  rename(y = value) %>%
-  left_join(read_csv("data/age-experience-tab.csv", show_col_types = FALSE),
+read_csv("data/null-stats.csv", col_types = "llicccd") %>%
+  filter(fed != "ALL", stat %in% c("obs", "ptpval")) %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  rename(y = obs, raw_pval = ptpval) %>%
+  mutate(pval = 2 * pmin(raw_pval, 1 - raw_pval)) %>%
+  mutate(adj_pval = p.adjust(pval, method = "fdr"),
+         .by = c(juniors, inactives, floor, metric)) %>%
+  left_join(read_csv("data/age-experience-tab.csv", col_types = "cllicddddd"),
             by = join_by(metric, juniors, inactives, floor, fed)) %>%
-  select(-c(stat, E, A, weight)) %>%
-  full_join(p_values("data/null-stats.csv"),
-            by = join_by(juniors, inactives, floor, metric, fed)) %>%
+  select(!E & !A & !weight) %>%
+  relocate(y, .before = yP) %>%
+  mutate(fdr = ifelse(adj_pval < 0.05, "Significant", "Non-significant"),
+         none = ifelse(pval < 0.05, "Significant", "Non-significant")) %>%
   pivot_longer(cols = c(fdr, none), names_to = "method", values_to = "signif") %>%
   filter(method == "fdr") %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
-  mutate(metric = case_when(
-    metric == "mean" ~ "Overall mean gap",
-    metric == "top10" ~ "Top 10 gap",
-    metric == "top1" ~ "Top 1 gap "
-  )) %>%
-  mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
-  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
-  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
-  mutate(filter = fct_relevel(
-    filter,
-    "With juniors, w/o inactives",
-    "With juniors, with inactives",
-    "W/o juniors, with inactives",
-    "W/o juniors, w/o inactives"
-  )) %>%
+  human_readable_labels() %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
   mutate(signif = ifelse(response == "yP", signif, strrep(" ", 55))) %>%
   mutate(signif = fct_relevel(signif, strrep(" ", 55), "Significant")) %>%
@@ -104,29 +87,15 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
 #ggsave("figures/summary-fig.pdf", width = 10, height = 8.57)
 
 
-read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   filter(fed != "ALL", stat == "obs") %>%
   rename(y = value) %>%
-  left_join(read_csv("data/age-experience-tab.csv", show_col_types = FALSE),
+  left_join(read_csv("data/age-experience-tab.csv", col_types = "cllicddddd"),
             by = join_by(metric, juniors, inactives, floor, fed)) %>%
   select(!c(stat, E, A, weight)) %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
-  mutate(metric = case_when(
-    metric == "mean" ~ "Overall mean gap",
-    metric == "top10" ~ "Top 10 gap",
-    metric == "top1" ~ "Top 1 gap "
-  )) %>%
-  mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
-  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
-  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
-  mutate(filter = fct_rev(fct_relevel(
-    filter,
-    "With juniors, w/o inactives",
-    "With juniors, with inactives",
-    "W/o juniors, with inactives",
-    "W/o juniors, w/o inactives"
-  ))) %>%
+  human_readable_labels() %>%
+  mutate(filter = fct_rev(filter)) %>%
   summarise(across(starts_with("y"), mean), .by = c(filter, floor, metric)) %>%
   mutate(floor = as_factor(floor)) %>%
   pivot_longer(cols = starts_with("y"), names_to = "response", values_to = "gap") %>%
@@ -160,7 +129,7 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
 #ggsave("figures/per-fed-rating-percentage.pdf", width = 8, height = 6)
 
 
-read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   filter(fed == "ALL", stat %in% c("obs", "ptmean")) %>%
   pivot_wider(names_from = stat, values_from = value) %>%
   filter(metric %in% c("mean", "top1", "top10")) %>%
@@ -168,22 +137,8 @@ read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
   pivot_longer(cols = c(obs, ptmean), names_to = "stat", values_to = "gap") %>%
   mutate(stat = case_match(stat, "obs" ~ "Unadjusted",
                            "ptmean" ~ "Participation-adjusted")) %>%
-  mutate(metric = case_when(
-    metric == "mean" ~ "Overall mean gap",
-    metric == "top10" ~ "Top 10 gap",
-    metric == "top1" ~ "Top 1 gap "
-  )) %>%
-  mutate(metric = fct_relevel(metric, "Overall mean gap", "Top 10 gap")) %>%
-  mutate(juniors = ifelse(juniors, "With juniors", "W/o juniors")) %>%
-  mutate(inactives = ifelse(inactives, "with inactives", "w/o inactives")) %>%
-  mutate(filter = str_c(juniors, ", ", inactives), .before = 1) %>%
-  mutate(filter = fct_rev(fct_relevel(
-    filter,
-    "With juniors, w/o inactives",
-    "With juniors, with inactives",
-    "W/o juniors, with inactives",
-    "W/o juniors, w/o inactives"
-  ))) %>%
+  human_readable_labels() %>%
+  mutate(filter = fct_rev(filter)) %>%
   mutate(across(c(floor, stat), as_factor)) %>%
   arrange(metric, stat, floor, filter) %>%
   select(metric, stat, floor, filter, gap) %>%

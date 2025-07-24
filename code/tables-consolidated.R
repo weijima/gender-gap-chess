@@ -40,6 +40,7 @@ fedTableForOutput <- function(fedTable) {
              top10_obs, top10_ptmean, top10_ptpval,
              top1_obs, top1_ptmean, top1_ptpval) %>%
     mutate(across(ends_with("obs") | ends_with("ptmean"), round)) %>%
+    mutate(across(ends_with("ptpval"), \(p) 2 * pmin(p, 1 - p))) %>%
     mutate(across(ends_with("ptpval"), \(x) round(x, 4))) %>%
     mutate(across(ends_with("ptpval"), \(x) {
       ifelse(x == 0, "$<$ 10\\textsuperscript{--4}", sprintf("%.4f", x))
