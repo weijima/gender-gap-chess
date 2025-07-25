@@ -63,6 +63,7 @@ null_data %>%
   )) %>%
   data_filter_labels() %>%
   mutate(across(obs | ptmean | ptsd, \(x) round(x, 1)), pval = round(pval, 4)) %>%
+  select(!ptpval) %>%
   arrange(metric) %>%
   knitr::kable(format = "simple")
 
