@@ -38,7 +38,7 @@ null_stats <- read_csv("data/null-stats.csv", col_types = "llicccd")
 
 
 # Global analysis
-global_anal <-
+knapp_global <-
   crossing(
     juniors = c(FALSE, TRUE),
     inactives = c(FALSE, TRUE),
@@ -55,17 +55,16 @@ global_anal <-
       },
       .progress = TRUE
     )
-  )
-
-global_anal %>%
+  ) %>%
   mutate(pval = 2 * pmin(raw_pval, 1 - raw_pval)) %>%
-  arrange(K) %>%
-  print(n = Inf)
+  arrange(K)
+
+write_csv(knapp_global, "data/knapp-rank-global.csv")
 
 
 
 # Per-federation analysis
-per_fed_anal <-
+knapp_per_fed <-
   null_stats %>%
   distinct(juniors, inactives, floor, fed) %>%
   filter(fed != "ALL") %>%
@@ -81,23 +80,9 @@ per_fed_anal <-
       },
       .progress = TRUE
     )
-  )
-
-per_fed_anal %>%
+  ) %>%
   mutate(pval = 2 * pmin(raw_pval, 1 - raw_pval)) %>%
   mutate(adj_pval = p.adjust(pval, method = "fdr"),
-         .by = c(juniors, inactives, floor, K)) %>%
-  summarize(
-    # Number of federations (with at least 30-30 players):
-    federations = n(),
-    # Number of federations where women are significantly stronger:
-    signif_F = sum(adj_pval < 0.05 & raw_pval >  0.5),
-    # Number of federations where men are significantly stronger:
-    signif_M = sum(adj_pval < 0.05 & raw_pval <= 0.5),
-    # In which federation(s) are women stronger than men?
-    feds_F = str_flatten_comma(fed[adj_pval < 0.05 & raw_pval > 0.5]),
-    .by = c(juniors, inactives, floor, K)
-  ) %>%
-  mutate(feds_F = ifelse(feds_F == "", "-", feds_F)) %>%
-  arrange(K) %>%
-  print(n = Inf)
+         .by = c(juniors, inactives, floor, K))
+
+write_csv(knapp_per_fed, "data/knapp-rank-per-fed.csv")

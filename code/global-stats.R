@@ -1,7 +1,9 @@
 library(tidyverse)
 
 
+
 top10 <- function(x) mean(tail(sort(x), 10))
+
 
 participation_gap <- function(rating_data) {
   rating_data %>%
@@ -10,12 +12,14 @@ participation_gap <- function(rating_data) {
     mutate(participation_gap = `M` / (`F` + `M`))
 }
 
+
 federations <- function(rating_data, min_players) {
   participation_gap(rating_data) %>%
     mutate(no_minority = pmin(`F`, `M`)) %>%
     filter(no_minority >= min_players) %>%
     pull(fed)
 }
+
 
 restrict_data <- function(rating_data, include_junior, include_inactive, min_rating,
                           min_players = 30, birth_uncertain = FALSE) {
@@ -27,20 +31,54 @@ restrict_data <- function(rating_data, include_junior, include_inactive, min_rat
     filter(fed %in% federations(., min_players))
 }
 
+
+data_filter_labels <- function(data) {
+  data %>%
+    mutate(jun_inact = str_c(as.integer(juniors), as.integer(inactives))) %>%
+    mutate(jun_inact = fct_relevel(jun_inact, "10", "11", "01", "00")) %>%
+    arrange(jun_inact, floor) %>%
+    mutate(juniors = ifelse(juniors, "With juniors, ", "W/o juniors,  "),
+           inactives = ifelse(inactives, "with inactives; ", "w/o inactives;  "),
+           floor = str_c("rating floor: ", floor)) %>%
+    mutate(filter = str_c(juniors, inactives, floor), .before = 1) %>%
+    select(!juniors & !inactives & !floor & !jun_inact)
+}
+
+
 signif_anal <- function(pvalues, signif = 0.05, method = "fdr") {
   adj_pvalues <- p.adjust(2 * pmin(pvalues, 1 - pvalues))
   case_when(
-    adj_pvalues <  signif & pvalues >= 0.5 ~ "female-slanted",
-    adj_pvalues <  signif & pvalues <  0.5 ~ "male-slanted",
-    adj_pvalues >= signif                  ~ "nonsignificant"
+    adj_pvalues <  signif & pvalues >= 0.5 ~ "F",
+    adj_pvalues <  signif & pvalues <  0.5 ~ "M",
+    adj_pvalues >= signif                  ~ ""
   )
 }
 
 
+
 rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
+
 null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE)
 
 
+
+# Permutation test results for global data across all metrics and data filters
+null_data %>%
+  filter(fed == "ALL") %>%
+  select(!fed) %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(signif = signif_anal(ptpval)) %>%
+  mutate(pval = 2 * pmin(ptpval, 1 - ptpval), .before = ptpval) %>%
+  select(!ptpval) %>%
+  data_filter_labels() %>%
+  mutate(across(obs | ptmean | ptsd, \(x) round(x, 1)), pval = round(pval, 4)) %>%
+  arrange(metric) %>%
+  knitr::kable(format = "simple")
+
+
+
+# Mann-Whitney and Kolmogorov-Smirnov tests
+# Compile data:
 global_data <-
   crossing(juniors = c(TRUE, FALSE),
            inactives = c(TRUE, FALSE),
@@ -60,7 +98,7 @@ global_data <-
       pull(rating)
   } ))
 
-
+# Analysis:
 global_data %>%
   mutate(MW = map2(male, female, wilcox.test, conf.int = TRUE)) %>%
   mutate(KS = map2(male, female, ks.test)) %>%
@@ -72,7 +110,7 @@ global_data %>%
   write_csv("data/global-stat-data.csv")
 # read_csv("data/global-stat-data.csv", col_types = "lliicdii")
 
-
+# Number of significant Mann-Whitney test results per data filter:
 crossing(juniors = c(TRUE, FALSE),
          inactives = c(TRUE, FALSE),
          floor = c(1000, 1400, 1600)) %>%
@@ -86,138 +124,3 @@ crossing(juniors = c(TRUE, FALSE),
   } )) %>%
   mutate(p_MW_adj = map(p_MW, p.adjust, method = "fdr")) %>%
   mutate(num_signif = map_dbl(p_MW_adj, \(x) length(x[x < 0.05])))
-
-# Distribution of p-values for just the [With juniors, w/o inactives, floor = 1000] case:
-crossing(juniors = c(TRUE, FALSE),
-         inactives = c(TRUE, FALSE),
-         floor = c(1000, 1400, 1600)) %>%
-  slice(7) %>%
-  mutate(p_MW = pmap(list(juniors, inactives, floor), \(juniors, inactives, floor) {
-    rating_data %>%
-      restrict_data(include_junior = juniors, include_inactive = inactives,
-                    min_rating = floor, min_players = 30, birth_uncertain = FALSE) %>%
-      nest(data = !fed) %>%
-      mutate(p = map_dbl(data, \(x) wilcox.test(rating ~ sex, data = x)$p.value))
-  } )) %>%
-  unnest(p_MW) %>%
-  mutate(p_adj = p.adjust(p, method = "fdr")) %>%
-  pull(p_adj) %>%
-  ks.test("punif", exact = FALSE, simulate.p.value = TRUE, B = 100000)
-
-
-# Mean:
-global_data %>%
-  mutate(mean_M = map_dbl(male, mean), mean_F = map_dbl(female, mean)) %>%
-  mutate(mean_diff = map2_dbl(mean_M, mean_F, `-`))
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "mean", stat == "ptpval") %>%
-  #pull(value) %>% p.adjust(method = "fdr") %>% ks.test("punif")
-  mutate(sig = signif_anal(value, method = "none")) %>%
-  count(sig)
-
-
-# Median:
-global_data %>%
-  mutate(median_M = map_dbl(male, median), median_F = map_dbl(female, median)) %>%
-  mutate(median_diff = map2_dbl(median_M, median_F, `-`))
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "median", stat == "obs") %>%
-  count(`higher female median` = value < 0)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "median", stat == "ptpval") %>%
-  # pull(value) %>% p.adjust(method = "fdr") %>% ks.test("punif")
-  mutate(sig = signif_anal(value, method = "none")) %>%
-  #filter(sig == "nonsignificant")
-  count(sig)
-
-
-# SD:
-global_data %>%
-  mutate(sd_M = map_dbl(male, sd), sd_F = map_dbl(female, sd))
-null_data %>%
-  filter(fed == "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "sd", stat == "ptpval")
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "sd", stat == "obs") %>%
-  count(`female higher` = value < 0)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "sd", stat == "ptpval") %>%
-  mutate(sig = signif_anal(value, method = "fdr")) %>%
-  count(sig)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "sd", stat == "ptpval") %>%
-  pull(value) %>%
-  p.adjust(method = "fdr") %>%
-  ks.test("punif")
-
-
-# Top1:
-global_data %>%
-  mutate(top1_M = map_dbl(male, max), top1_F = map_dbl(female, max))
-null_data %>%
-  filter(fed == "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top1")
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top1", stat == "obs") %>%
-  count(`female higher` = value < 0)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top1", stat == "obs") %>%
-  filter(value < 0)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top1", stat == "ptpval") %>%
-  mutate(sig = signif_anal(value, method = "fdr")) %>%
-  count(sig)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top1", stat == "ptpval") %>%
-  pull(value) %>%
-  p.adjust(method = "fdr") %>%
-  ks.test("punif")
-
-
-# Top10:
-global_data %>%
-  mutate(top10_M = map_dbl(male, top10), top10_F = map_dbl(female, top10))
-null_data %>%
-  filter(fed == "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top10")
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top10", stat == "obs") %>%
-  count(`female higher` = value < 0)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top10", stat == "ptpval") %>%
-  mutate(sig = signif_anal(value, method = "fdr")) %>%
-  count(sig)
-null_data %>%
-  filter(fed != "ALL") %>%
-  filter(juniors, !inactives, floor == 1000) %>%
-  filter(metric == "top10", stat == "ptpval") %>%
-  pull(value) %>%
-  p.adjust(method = "fdr") %>%
-  ks.test("punif")
