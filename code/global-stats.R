@@ -37,21 +37,9 @@ data_filter_labels <- function(data) {
     mutate(jun_inact = str_c(as.integer(juniors), as.integer(inactives))) %>%
     mutate(jun_inact = fct_relevel(jun_inact, "10", "11", "01", "00")) %>%
     arrange(jun_inact, floor) %>%
-    mutate(juniors = ifelse(juniors, "With juniors, ", "W/o juniors,  "),
-           inactives = ifelse(inactives, "with inactives; ", "w/o inactives;  "),
-           floor = str_c("rating floor: ", floor)) %>%
-    mutate(filter = str_c(juniors, inactives, floor), .before = 1) %>%
-    select(!juniors & !inactives & !floor & !jun_inact)
-}
-
-
-signif_anal <- function(pvalues, signif = 0.05, method = "fdr") {
-  adj_pvalues <- p.adjust(2 * pmin(pvalues, 1 - pvalues))
-  case_when(
-    adj_pvalues <  signif & pvalues >= 0.5 ~ "F",
-    adj_pvalues <  signif & pvalues <  0.5 ~ "M",
-    adj_pvalues >= signif                  ~ ""
-  )
+    select(!jun_inact) %>%
+    mutate(juniors = ifelse(juniors, "Yes", "No"),
+           inactives = ifelse(inactives, "Yes", "No"))
 }
 
 
@@ -67,9 +55,12 @@ null_data %>%
   filter(fed == "ALL") %>%
   select(!fed) %>%
   pivot_wider(names_from = stat, values_from = value) %>%
-  mutate(signif = signif_anal(ptpval)) %>%
-  mutate(pval = 2 * pmin(ptpval, 1 - ptpval), .before = ptpval) %>%
-  select(!ptpval) %>%
+  mutate(pval = 2 * pmin(ptpval, 1 - ptpval)) %>%
+  mutate(signif = case_when(
+    pval <  0.05 & ptpval >= 0.5 ~ "women",
+    pval <  0.05 & ptpval <  0.5 ~ "men",
+    pval >= 0.05                 ~ ""
+  )) %>%
   data_filter_labels() %>%
   mutate(across(obs | ptmean | ptsd, \(x) round(x, 1)), pval = round(pval, 4)) %>%
   arrange(metric) %>%
