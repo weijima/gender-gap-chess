@@ -59,7 +59,7 @@ global_anal <-
 
 global_anal %>%
   mutate(pval = 2 * pmin(raw_pval, 1 - raw_pval)) %>%
-  arrange(desc(pval)) %>%
+  arrange(K) %>%
   print(n = Inf)
 
 
@@ -99,5 +99,5 @@ per_fed_anal %>%
     .by = c(juniors, inactives, floor, K)
   ) %>%
   mutate(feds_F = ifelse(feds_F == "", "-", feds_F)) %>%
-  arrange(signif_F + signif_M) %>%
+  arrange(K) %>%
   print(n = Inf)

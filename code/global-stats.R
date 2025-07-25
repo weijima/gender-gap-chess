@@ -27,20 +27,12 @@ restrict_data <- function(rating_data, include_junior, include_inactive, min_rat
     filter(fed %in% federations(., min_players))
 }
 
-p_anal <- function(pvalues, signif = 0.05, method = "fdr") {
-  p_female <- p.adjust(1 - pvalues, method = method)
-  p_male <- p.adjust(pvalues, method = method)
-  # The factor of 2 simply introduces a symbol to distinguish women (2) from men (1):
-  signif_female <- 2L * (p_female < signif / 2)
-  signif_male <- 1L * (p_male < signif / 2)
-  # The nonzero entries of signif_female and signif_male are completely nonoverlapping:
-  s <- signif_female + signif_male
-  # Translate the arbitrary symbols 2 and 1 into test describing significance:
+signif_anal <- function(pvalues, signif = 0.05, method = "fdr") {
+  adj_pvalues <- p.adjust(2 * pmin(pvalues, 1 - pvalues))
   case_when(
-    s == 2 ~ "female-slanted",
-    s == 1 ~ "male-slanted",
-    s == 0 ~ "nonsignificant",
-    .default = "ERROR - BOTH SEXES ARE SIGNIFICANT"
+    adj_pvalues <  signif & pvalues >= 0.5 ~ "female-slanted",
+    adj_pvalues <  signif & pvalues <  0.5 ~ "male-slanted",
+    adj_pvalues >= signif                  ~ "nonsignificant"
   )
 }
 
@@ -93,9 +85,9 @@ crossing(juniors = c(TRUE, FALSE),
       pull(p)
   } )) %>%
   mutate(p_MW_adj = map(p_MW, p.adjust, method = "fdr")) %>%
-  mutate(signif = map_dbl(p_MW_adj, \(x) length(x[x < 0.05])))
+  mutate(num_signif = map_dbl(p_MW_adj, \(x) length(x[x < 0.05])))
 
-# Distribution of p-values for just the baseline case:
+# Distribution of p-values for just the [With juniors, w/o inactives, floor = 1000] case:
 crossing(juniors = c(TRUE, FALSE),
          inactives = c(TRUE, FALSE),
          floor = c(1000, 1400, 1600)) %>%
@@ -109,9 +101,8 @@ crossing(juniors = c(TRUE, FALSE),
   } )) %>%
   unnest(p_MW) %>%
   mutate(p_adj = p.adjust(p, method = "fdr")) %>%
-  #count(signif = p_adj < 0.05)
   pull(p_adj) %>%
-  ks.test("punif")
+  ks.test("punif", exact = FALSE, simulate.p.value = TRUE, B = 100000)
 
 
 # Mean:
@@ -123,7 +114,7 @@ null_data %>%
   filter(juniors, !inactives, floor == 1000) %>%
   filter(metric == "mean", stat == "ptpval") %>%
   #pull(value) %>% p.adjust(method = "fdr") %>% ks.test("punif")
-  mutate(sig = p_anal(value, method = "none")) %>%
+  mutate(sig = signif_anal(value, method = "none")) %>%
   count(sig)
 
 
@@ -141,7 +132,7 @@ null_data %>%
   filter(juniors, !inactives, floor == 1000) %>%
   filter(metric == "median", stat == "ptpval") %>%
   # pull(value) %>% p.adjust(method = "fdr") %>% ks.test("punif")
-  mutate(sig = p_anal(value, method = "none")) %>%
+  mutate(sig = signif_anal(value, method = "none")) %>%
   #filter(sig == "nonsignificant")
   count(sig)
 
@@ -162,7 +153,7 @@ null_data %>%
   filter(fed != "ALL") %>%
   filter(juniors, !inactives, floor == 1000) %>%
   filter(metric == "sd", stat == "ptpval") %>%
-  mutate(sig = p_anal(value, method = "fdr")) %>%
+  mutate(sig = signif_anal(value, method = "fdr")) %>%
   count(sig)
 null_data %>%
   filter(fed != "ALL") %>%
@@ -194,7 +185,7 @@ null_data %>%
   filter(fed != "ALL") %>%
   filter(juniors, !inactives, floor == 1000) %>%
   filter(metric == "top1", stat == "ptpval") %>%
-  mutate(sig = p_anal(value, method = "fdr")) %>%
+  mutate(sig = signif_anal(value, method = "fdr")) %>%
   count(sig)
 null_data %>%
   filter(fed != "ALL") %>%
@@ -221,7 +212,7 @@ null_data %>%
   filter(fed != "ALL") %>%
   filter(juniors, !inactives, floor == 1000) %>%
   filter(metric == "top10", stat == "ptpval") %>%
-  mutate(sig = p_anal(value, method = "fdr")) %>%
+  mutate(sig = signif_anal(value, method = "fdr")) %>%
   count(sig)
 null_data %>%
   filter(fed != "ALL") %>%
