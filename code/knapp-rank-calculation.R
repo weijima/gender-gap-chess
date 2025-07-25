@@ -12,6 +12,14 @@ restrict_data <- function(rating_data, juniors, inactives, floor,
 }
 
 
+sex_counts <- function(rating_data, include_juniors, include_inactives, rating_floor) {
+  rating_data %>%
+    restrict_data(include_juniors, include_inactives, rating_floor) %>%
+    count(sex, name = "no_of_players") %>%
+    pivot_wider(names_from = "sex", values_from = "no_of_players", values_fill = 0)
+}
+
+
 top_Kth_woman_rank <- function(rating_tab, K = 1) {
   rating_tab %>%
     arrange(desc(rating)) %>%
@@ -45,6 +53,10 @@ knapp_global <-
     floor = c(1000L, 1400L, 1600L),
     K = c(1L, 10L)
   ) %>%
+  mutate(G = pmap(list(juniors, inactives, floor), \(j, i, f) {
+    sex_counts(rating_data, j, i, f)
+  } )) %>%
+  unnest(G) %>%
   mutate(
     raw_pval = pmap_dbl(
       list(juniors, inactives, floor, K),

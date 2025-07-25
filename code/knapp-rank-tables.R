@@ -25,8 +25,9 @@ read_csv("data/knapp-rank-global.csv", col_types = "lliidd") %>%
   select(!raw_pval) %>%
   mutate(pval = round(pval, 4)) %>%
   rename_with(str_to_title) %>%
-  rename(`p-value` = Pval, `Rating floor` = Floor) %>%
-  knitr::kable(format = "simple")
+  rename(`p-value` = Pval, `Rating floor` = Floor, Women = `F`, Men = M) %>%
+  kableExtra::kbl(format = "latex", booktabs = TRUE,
+                  linesep = c(rep("", 11), "\\addlinespace"))
 
 
 
@@ -51,4 +52,5 @@ read_csv("data/knapp-rank-per-fed.csv", col_types = "lliciddd") %>%
          `Women stronger` = Signif_f,
          `Men stronger` = Signif_m) %>%
   select(!Feds_f) %>%
-  knitr::kable(format = "simple")
+  kableExtra::kbl(format = "latex", booktabs = TRUE,
+                  linesep = c(rep("", 11), "\\addlinespace"))
