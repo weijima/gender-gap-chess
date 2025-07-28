@@ -53,7 +53,7 @@ read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   ggplot() +
   geom_boxplot(aes(x = floor, y = gap, fill = filter), outlier.shape = NA) +
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
-             position = position_jitterdodge(jitter.width = 0.06, seed = 54321)) +
+             position = position_dodge(width = 0.75)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
   labs(
     x = "Rating floor",
