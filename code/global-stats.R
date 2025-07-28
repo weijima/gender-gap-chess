@@ -51,21 +51,41 @@ null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE)
 
 
 # Permutation test results for global data across all metrics and data filters
-null_data %>%
+perm_table <- null_data %>%
   filter(fed == "ALL") %>%
   select(!fed) %>%
   pivot_wider(names_from = stat, values_from = value) %>%
   mutate(pval = 2 * pmin(ptpval, 1 - ptpval)) %>%
   mutate(signif = case_when(
-    pval <  0.05 & ptpval >= 0.5 ~ "women",
-    pval <  0.05 & ptpval <  0.5 ~ "men",
+    pval <  0.05 & ptpval >= 0.5 ~ "(W)",
+    pval <  0.05 & ptpval <  0.5 ~ "(M)",
     pval >= 0.05                 ~ ""
   )) %>%
   data_filter_labels() %>%
-  mutate(across(obs | ptmean | ptsd, \(x) round(x, 1)), pval = round(pval, 4)) %>%
   select(!ptpval) %>%
-  arrange(metric) %>%
-  knitr::kable(format = "simple")
+  mutate(metric = fct_relevel(metric, "mean", "median", "top10", "top1", "sd")) %>%
+  arrange(metric)
+
+perm_table %>%
+  mutate(metric = case_match(
+    metric,
+    "mean" ~ "Overall mean gap",
+    "median" ~ "Overall median gap",
+    "top10" ~ "Top 10 gap",
+    "top1" ~ "Top 1 gap",
+    "sd" ~ "Gap in standard deviation"
+  )) %>%
+  mutate(pt = str_c("$", sprintf("%.1f", ptmean), " \\pm ", sprintf("%.1f", ptsd), "$"),
+         .keep = "unused") %>%
+  mutate(obs = sprintf("%.1f", obs)) %>%
+  mutate(pval = sprintf("%.4f", pval)) %>%
+  select(Metric = metric, Juniors = juniors, Inactives = inactives,
+         `Rating floor` = floor, `Observed` = obs, `Permutation` = pt,
+         `p-value` = pval, ` ` = signif) %>%
+  kableExtra::kbl(format = "latex", booktabs = TRUE, longtable = TRUE,
+                  linesep = c(rep("", 11), "\\addlinespace"), escape = FALSE,
+                  align = "llllrrrl",
+                  label = "tab:global-perm-SI", caption = "")
 
 
 
