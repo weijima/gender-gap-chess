@@ -136,3 +136,26 @@ crossing(juniors = c(TRUE, FALSE),
   } )) %>%
   mutate(p_MW_adj = map(p_MW, p.adjust, method = "fdr")) %>%
   mutate(num_signif = map_dbl(p_MW_adj, \(x) length(x[x < 0.05])))
+
+
+
+# Global analysis of rating standard deviations
+null_data %>%
+  filter(metric == "sd" & fed == "ALL") %>%
+  select(!metric & !fed) %>%
+  filter(stat %in% c("obs", "ptpval")) %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stddevs = pmap(list(juniors, inactives, floor), \(jun, ina, fl) {
+    restrict_data(rating_data, jun, ina, fl, min_players = 0) %>%
+      summarize(sd = sd(rating), .by = sex) %>%
+      pivot_wider(names_from = sex, values_from = sd, names_prefix = "sd_")
+  } )) %>%
+  unnest(stddevs) %>%
+  data_filter_labels() %>%
+  mutate(ptpval = 2 * pmin(ptpval, 1 - ptpval)) %>%
+  select(Juniors = juniors, Inactives = inactives, `Rating floor` = floor,
+         `sd(women)` = sd_F, `sd(men)` = sd_M, Difference = obs, `p-value` = ptpval) %>%
+  kableExtra::kbl(format = "latex", booktabs = TRUE, longtable = FALSE,
+                  linesep = "", escape = FALSE, digits = c(NA, NA, 0, 1, 1, 1, 4),
+                  align = "lllrrrr",
+                  label = "tab:global-perm-SI", caption = "")
