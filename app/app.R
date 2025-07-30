@@ -23,11 +23,18 @@ participation_gap <- function(rating_data) {
 }
 
 
-stats_participation <- function(juniors, inactives, floor, metric, rating_data) {
+stats_participation <- function(juniors, inactives, floor, rating_data) {
   rating_data |>
-    restrict_data(juniors == {{juniors}}, inactives == {{inactives}},
-                  floor == {{floor}}) |>
+    restrict_data({{juniors}}, {{inactives}}, {{floor}}) |>
     participation_gap()
+}
+
+
+global_participation <- function(juniors, inactives, floor, rating_data) {
+  rating_data |>
+    restrict_data({{juniors}}, {{inactives}}, {{floor}}) |>
+    count(sex, name = "no_of_players") |>
+    pivot_wider(names_from = sex, values_from = no_of_players)
 }
 
 
@@ -45,9 +52,33 @@ simple_stats <- function(tab) {
   pos_sig_str <- if (tab$signif[1] != "") str_c("(", pos_sig, " significant)") else ""
   neg_sig_str <- if (tab$signif[1] != "") str_c("(", neg_sig, " significant)") else ""
   HTML(str_c(
+    "• Average gap across all federations: ", sprintf("%.1f", mean_gap), "<br>",
     "• Positive gap: ", n_pos, " federations ", pos_sig_str, "<br>",
-    "• Negative gap: ", n_neg, " federations ", neg_sig_str, "<br>",
-    "• Average gap across all federations: ", sprintf("%.1f", mean_gap)
+    "• Negative gap: ", n_neg, " federations ", neg_sig_str
+  ))
+}
+
+
+global_stats <- function(stats, metric, alpha) {
+  metric_label <- case_when(
+    metric == "mean"   ~ "Observed overall mean gap",
+    metric == "median" ~ "Observed overall median gap",
+    metric == "top10"  ~ "Observed top 10 gap",
+    metric == "top1"   ~ "Observed top 1 gap",
+    metric == "sd"     ~ "Observed gap in standard deviations"
+  )
+  signif <- case_when(
+    stats$pval <  alpha & stats$ptpval >= 0.5 ~ "slanted towards women",
+    stats$pval <  alpha & stats$ptpval <  0.5 ~ "slanted towards men",
+    stats$pval >= alpha                 ~ "not significant"
+  )
+  HTML(str_c(
+    "<h4>Global data</h4>",
+    "• Number of players: ", stats$W, " women, ", stats$M, " men", "<br>",
+    "• ", metric_label, ": ", sprintf("%.1f", stats$obs) ,"<br>",
+    "• Permutation mean and standard deviation: ",
+    sprintf("%.1f", stats$ptmean), " &plusmn; ", sprintf("%.1f", stats$ptsd), "<br>",
+    "• p-value: ", sprintf("%.4f", stats$pval), " (", signif, ")"
   ))
 }
 
@@ -136,12 +167,12 @@ renderDocUI <- function(documentationPath, panelID = "doc", header = "Documentat
 rating_data <- read_rds("rating-data.rds") |>
   restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000)
 
-null_stats <- read_rds("null-stats.rds") |>
-  filter(fed != "ALL")
+null_stats <- read_rds("null-stats.rds")
 
 age_experience <- read_rds("age-experience-tab.rds")
 
 main_table <- null_stats |>
+  filter(fed != "ALL") |>
   filter(stat %in% c("obs", "ptpval")) |>
   pivot_wider(names_from = stat, values_from = value) |>
   rename(y = obs, pval = ptpval) |>
@@ -149,6 +180,12 @@ main_table <- null_stats |>
   left_join(age_experience, by = join_by(metric, juniors, inactives, floor, fed)) |>
   select(!E & !A & !weight) |>
   mutate(pval = 2 * pmin(pval, 1 - pval))
+
+global_table <- null_stats |>
+  filter(fed == "ALL") |>
+  select(!fed) |>
+  pivot_wider(names_from = stat, values_from = value) |>
+  mutate(pval = 2 * pmin(ptpval, 1 - ptpval))
 
 
 
@@ -221,6 +258,9 @@ ui <- fluidPage(
     ),
     mainPanel(
       uiOutput("documentation"),
+      hr(),
+      htmlOutput("globalstats"),
+      hr(),
       plotOutput("plot"),
       br(), br(), hr(),
       htmlOutput("stats"),
@@ -240,13 +280,25 @@ server <- function(input, output) {
              floor == input$floor, metric == input$metric, qty == input_qty()) |>
       left_join(
         stats_participation(juniors = input$juniors, inactives = input$inactives,
-                            floor = input$floor, metric = input$metric, rating_data),
+                            floor = input$floor, rating_data),
         by = join_by(fed)
       ) |>
       mutate(pval = p.adjust(pval, method = input$method)) |>
       mutate(signif = ifelse(pval < input$alpha, "Significant", "Not significant")) |>
       (\(.) if (input_qty() == "yP" || input$metric == "sd") . else
         mutate(., signif = ""))()
+  )
+
+  global_dat <- reactive(
+    global_table |>
+      filter(juniors == input$juniors, inactives == input$inactives,
+             floor == input$floor, metric == input$metric) |>
+      bind_cols(
+        global_participation(juniors = input$juniors, inactives = input$inactives,
+                             floor = input$floor, rating_data)
+      ) |>
+      rename(W = `F`) |>
+      as.list()
   )
 
   input_qty <- reactiveVal(value = "y")
@@ -272,6 +324,10 @@ server <- function(input, output) {
   })
 
   output$documentation <- renderDocUI("documentation.md")
+
+  output$globalstats <- renderText({
+    global_stats(global_dat(), input$metric, input$alpha)
+  })
 
   output$plot <- renderPlot({
     gap_plot(dat(), metric = input$metric, qty = input_qty(), rating_data)

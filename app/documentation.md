@@ -1,4 +1,4 @@
-This application is a supplement to the manuscript "Deconstructing the gender gap in chess ratings". It allows one to quickly and efficiently explore the rating- and participation gap between genders in chess, for various settings. The application interface is split between two sides. On the left there is a panel of settings which allows the user to explore various data filters and other parameterization options. On the right we have the corresponding data, displayed in three distinct forms: as a figure, as a small number of summary statistics, and as a table. Below is a detailed description of each of these items.
+This application is a supplement to the manuscript "Deconstructing the gender gap in chess ratings". It allows one to quickly and efficiently explore the rating- and participation gap between genders in chess, for various settings. The application interface is split between two sides. On the left there is a panel of settings which allows the user to adjust various data filters and other parameterization options. On the right we have the corresponding data, organized into four shorter segments: a brief analysis of the global rating distribution (i.e., without breaking the data down into individual federations), a figure, a small number of summary statistics to help interpret the figure, and a table. Below is a detailed description of each of these items.
 
 
 
@@ -34,6 +34,12 @@ Here one can adjust the following options:
 
 
 
+### Global statistics
+
+This shows information on the rating- and participation gap between women and men without disaggregating the data into individual federations. The first line shows the number of women and men, after applying the data filters as specified in the settings panel. The second line is the observed gap for the chosen metric. The third line is the expected gender gap based on differences in participation only, plus/minus one standard deviation (as computed from the distribution of our one million permutation samples). The last line is the p-value for the observed gap, plus an assessment of significance at the level specified by the slider in thesettings panel.
+
+
+
 ### Plot
 
 The plot is always structured in the same way. The x-axis shows the percentage of women, so it is a measure of the participation gap (with values closer to zero indicating larger gaps). The y-axis shows some measure of the rating gap (men minus women), depending on the setup in the settings panel. Each federation is a point in this plot, shown via its three-letter abbreviation. The dashed horizontal line at y = 0 is simply for visual aid, showing the point of no rating gap. If significant and non-significant results are shown, then the former are in red and the latter in gray. This is also indicated by a color legend at the bottom of the plot. If significance and p-values do not make sense for the chosen setup, then all federations are shown in a neutral blue color.
@@ -42,7 +48,7 @@ The plot is always structured in the same way. The x-axis shows the percentage o
 
 ### Summary statistics
 
-These are displayed directly below the plot. They contain information that can in principle be read off the graph, but is more convenient to have in direct numeric format. The first is the number of federations where the rating gap is positive; i.e., the number of federations in the plot which fall above the dashed line. In case p-values and significance are meaningful for the chosen setup, then the number of significant positive results are also shown (i.e., number of federations falling above the dashed line that are in red). The second statistic shows the same, but for federations where the rating gap is negative (women are stronger players). The third and last statistic is the arithmetic mean of the rating gaps across all federations in the plot.
+These are displayed directly below the plot. They contain information that can in principle be read off the graph, but is more convenient to have in direct numeric format. The first statistic is the arithmetic mean of the rating gaps across all federations in the plot. The second is the number of federations where the rating gap is positive; i.e., the number of federations in the plot which fall above the dashed line. In case p-values and significance are meaningful for the chosen setup, then the number of significant positive results are also shown (i.e., number of federations falling above the dashed line that are in red). The third and last statistic shows the same, but for federations where the rating gap is negative (women are stronger players).
 
 
 
@@ -55,6 +61,8 @@ The table is:
 * Searchable -- using the search bar at the top right of the table, one can filter for corresponding rows only. For example, one can type "LAT" here to show the data just for the federation of Latvia.
 * Paginated -- one can move between pages using the numbered buttons at the bottom right. One can also adjust the number of items shown on one page (top left of the table).
 * Sortable -- it is also possible to arrange the data in different ways, by clicking on the small arrows next to the column names. This makes it easy to e.g. pinpoint which federation(s) have the most positive or most negative rating gaps, by simply sorting in descending or ascending order of the **rating gap** column.
+
+<br>
 
 <hr>
 
