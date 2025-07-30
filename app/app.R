@@ -78,10 +78,11 @@ create_ylab <- function(metric, qty) {
     qty == "yPEA" ~ "PEA-corrected"
   )
   ylab_metric <- case_when(
-    metric == "mean"  ~ paste(ylab_qty, "overall mean gap"),
-    metric == "top10" ~ paste(ylab_qty, "top 10 gap"),
-    metric == "top1"  ~ paste(ylab_qty, "top 1 gap"),
-    metric == "sd"    ~ "Gap in standard deviations"
+    metric == "mean"   ~ paste(ylab_qty, "overall mean gap"),
+    metric == "median" ~ paste(ylab_qty, "overall median gap"),
+    metric == "top10"  ~ paste(ylab_qty, "top 10 gap"),
+    metric == "top1"   ~ paste(ylab_qty, "top 1 gap"),
+    metric == "sd"     ~ "Gap in standard deviations"
   )
   bquote(.(ylab_metric) ~ (M - W))
 }
@@ -186,9 +187,9 @@ ui <- fluidPage(
       radioButtons(
         inputId = "metric",
         label = "Metric:",
-        choiceNames = c("Overall mean gap", "Top 10 gap",
-                        "Top 1 gap", "Standard deviation"),
-        choiceValues = c("mean", "top10", "top1", "sd"),
+        choiceNames = c("Overall mean gap", "Overall median gap",
+                        "Top 10 gap", "Top 1 gap", "Standard deviation"),
+        choiceValues = c("mean", "median", "top10", "top1", "sd"),
         selected = "mean",
         inline = FALSE
       ),

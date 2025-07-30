@@ -47,7 +47,8 @@ diff_table <- function(rating_data, .f = mean) {
     group_by(fed, sex) %>%
     slice_head(n = { if (identical(.f, top10)) 10 else
       if (identical(.f, top1)) 1 else nrow(.) }) %>%
-    summarise(rating=mean(rating), games=mean(games), age=mean(age), .groups="drop") %>%
+    summarise(rating = mean(rating), games = mean(games), age = mean(age),
+              .groups = "drop") %>%
     pivot_wider(names_from = sex, values_from = c(rating, games, age)) %>%
     transmute(fed, y = rating_M - rating_F, E = games_M - games_F, A = age_M - age_F)
 }
@@ -73,7 +74,7 @@ analyze_age_experience <- function(rating_data, null_data, min_rating = 1000,
                                    min_players = 30, include_junior = TRUE,
                                    include_inactive = FALSE, birth_uncertain = FALSE) {
   if (include_junior) max_byear <- 2019 else max_byear <- 1999
-  tibble(fun = list(mean = mean, top10 = top10, top1 = top1)) %>%
+  tibble(fun = list(mean = mean, median = median, top10 = top10, top1 = top1)) %>%
     mutate(metric = names(fun)) %>%
     mutate(fit = map2(fun, metric,
                       ~restrict_data(rating_data,
@@ -97,7 +98,7 @@ analyze_age_experience <- function(rating_data, null_data, min_rating = 1000,
 
 rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
-null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE) %>%
+null_data <- read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   filter(fed != "ALL")
 
 
@@ -108,18 +109,19 @@ analyze_age_experience(rating_data, null_data, min_rating = 1000, min_players = 
   select(-r.squared) %>%
   mutate(term = ifelse(term == "(Intercept)", "Intercept", term)) %>%
   mutate(metric = case_when(
-    metric == "mean" ~ "Mean gap (All)",
-    metric == "top10" ~ "Mean gap (Top 10)",
-    metric == "top1" ~ "Gap (Top 1)",
+    metric == "mean"   ~ "Overall mean gap",
+    metric == "median" ~ "Overall median gap",
+    metric == "top10"  ~ "Top 10 gap",
+    metric == "top1"   ~ "Top 1 gap",
     .default = NA
   )) %>%
   pivot_wider(names_from = term, values_from = c(estimate, std.error, p.value),
               names_sep = " ") %>%
   relocate(metric, contains(" Intercept"), contains(" E"), contains(" A")) %>%
-  knitr::kable(format = "latex")
+  kableExtra::kbl(format = "latex", booktabs = TRUE)
 
 # Table of coefficients, weights, and regression results for all parameter combinations:
-crossing(fun = list(mean = mean, top10 = top10, top1 = top1),
+crossing(fun = list(mean = mean, median = median, top10 = top10, top1 = top1),
          juniors = c(TRUE, FALSE),
          inactives = c(TRUE, FALSE),
          floor = c(1000, 1400, 1600)) %>%

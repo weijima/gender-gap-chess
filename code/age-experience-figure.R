@@ -57,7 +57,7 @@ rating_data <- read_csv("data/rating-data.csv", col_types = "ccciiil") %>%
 main_tab <-
   crossing(juniors = c(FALSE, TRUE),
            inactives = c(FALSE, TRUE),
-           floor = c(1000, 1400, 1600),
+           floor = c(1000L, 1400L, 1600L),
            property = c("games", "age"),
            metric = c("mean", "top10", "top1")) %>%
   mutate(data = pmap(., \(juniors, inactives, floor, property, metric) {

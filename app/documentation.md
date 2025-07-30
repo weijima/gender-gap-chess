@@ -2,7 +2,7 @@ This application is a supplement to the manuscript "Deconstructing the gender ga
 
 
 
-### The settings panel
+### Settings panel
 
 Here one can adjust the following options:
 
@@ -16,6 +16,7 @@ Here one can adjust the following options:
 
 * **Metric** -- What aspect of the rating difference between genders to display in the plot, for each federation. The difference is always calculated as the statistic for men minus the same statistic for women. The options are:
   - Overall mean gap, for showing the difference between the mean ratings;
+  - Overall median gap, for showing the difference between the median ratings;
   - Top 10 gap, for showing the difference between the mean ratings of the top 10 players of each gender;
   - Top 1 gap, for showing the difference between the top-rated man and woman;
   - Standard deviation, for showing the difference between the rating standard deviations. (Note that if this option is chosen, then it makes no sense to make any corrections to ratings. Therefore the **Correction to ratings** option, described below, is shaded out.)
@@ -33,7 +34,7 @@ Here one can adjust the following options:
 
 
 
-### The plot
+### Plot
 
 The plot is always structured in the same way. The x-axis shows the percentage of women, so it is a measure of the participation gap (with values closer to zero indicating larger gaps). The y-axis shows some measure of the rating gap (men minus women), depending on the setup in the settings panel. Each federation is a point in this plot, shown via its three-letter abbreviation. The dashed horizontal line at y = 0 is simply for visual aid, showing the point of no rating gap. If significant and non-significant results are shown, then the former are in red and the latter in gray. This is also indicated by a color legend at the bottom of the plot. If significance and p-values do not make sense for the chosen setup, then all federations are shown in a neutral blue color.
 
@@ -45,7 +46,7 @@ These are displayed directly below the plot. They contain information that can i
 
 
 
-### The table
+### Table
 
 This follows right below the summary statistics, and gives a tabular summary of the data. Each row corresponds to a unique federation. The five columns are: federation (with three-letter abbreviations), no. of women (the number of FIDE-rated chess players of the given federation who are women), no. of men (number of players who are men), rating gap (difference in the chosen rating statistic between men and women), and p-value (these are all empty when p-values are not applicable, otherwise they contain the unadjusted or adjusted p-values, depending on user choice). The rating gaps are shown up to two, the p-values up to four decimal precision.
 

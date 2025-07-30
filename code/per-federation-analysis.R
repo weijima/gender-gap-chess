@@ -41,7 +41,7 @@ pvalues %>%
   pivot_wider(names_from = metric, values_from = sig) %>%
   rename(`Junior players` = juniors, `Inactive players` = inactives,
          `No. of federations` = feds, `Rating floor` = floor) %>%
-  knitr::kable(format = "latex")
+  kableExtra::kbl(format = "latex", booktabs = TRUE, linesep = "")
 
 # The data in terms of percentage of significant federations:
 pvalues %>%

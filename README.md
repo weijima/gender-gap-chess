@@ -3,12 +3,23 @@
 This project aims at a rigorous and comprehensive analysis of gender differences in the ratings of top-level chess players. The *participation rate hypothesis* states that the naively-observed gender difference between top-rated chess players might largely be a statistical artifact: since only about 10% of rated players are women, the tail end of their rating distribution is naturally undersampled compared to that of men. We quantify whether, and to what extent, the participation rate hypothesis explains observed rating differences between genders. We do so using a robust nonparametric statistical approach and a comprehensive, global dataset of over 340,000 internationally-rated chess players coming from 99 national federations.
 
 
-#### Software dependencies: R (tested with R 4.2.1, 4.2.2, and 4.3.3). Required R packages:
+#### Software dependencies
+
+R (tested with R 4.2.1, 4.2.2, and 4.3.3). Required R packages:
 
 * `tidyverse`: Efficient data manipulation and plotting
 * `Rcpp`: Importing and compiling functions written in C++
 * `fs`: Cross-platform file system operations
-* `exraDistr`: For working with the negative hypergeometric distribution
+* `patchwork`: Joining multiple plots together
+* `exraDistr`: Working with the negative hypergeometric distribution
+* `scales`: Various scale functions for aiding visualization
+* `ggtext`: Improved text rendering for ggplot2 plots
+* `viridis`: Colorblind-friendly color scales
+* `kableExtra`: Creating LaTeX-formatted tables
+* `shiny`: Creating interactive applications
+* `shinyjs`: Utilities for creating interactive applications
+* `shinyBS`: More utilities for creating interactive applications
+* `DT`: Searchable and sortable tables in interactive applications
 
 Required non-standard hardware: none. However, reproducing the permutation results with sufficiently many permutations (more than a hundred thousand per sample) does benefit from having access to a computing cluster.
 

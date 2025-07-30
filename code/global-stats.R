@@ -46,7 +46,7 @@ data_filter_labels <- function(data) {
 
 rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
-null_data <- read_csv("data/null-stats.csv", show_col_types = FALSE)
+null_data <- read_csv("data/null-stats.csv", col_types = "llicccd")
 
 
 
