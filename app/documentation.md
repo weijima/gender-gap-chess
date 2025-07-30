@@ -36,7 +36,7 @@ Here one can adjust the following options:
 
 ### Global statistics
 
-This shows information on the rating- and participation gap between women and men without disaggregating the data into individual federations. The first line shows the number of women and men, after applying the data filters as specified in the settings panel. The second line is the observed gap for the chosen metric. The third line is the expected gender gap based on differences in participation only, plus/minus one standard deviation (as computed from the distribution of our one million permutation samples). The last line is the p-value for the observed gap, plus an assessment of significance at the level specified by the slider in thesettings panel.
+This shows information on the rating- and participation gap between women and men without disaggregating the data into individual federations. The first line shows the number of women and men, after applying the data filters as specified in the settings panel. The second line is the observed gap for the chosen metric. The third line is the expected gender gap based on differences in participation only, plus/minus one standard deviation (as computed from the distribution of our one million permutation samples). The last line is the p-value for the observed gap, plus an assessment of significance at the level specified by the slider in the settings panel.
 
 
 
