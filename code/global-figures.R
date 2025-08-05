@@ -11,7 +11,7 @@ restrict_data <- function(juniors, inactives, floor,
 }
 
 
-rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil") %>% as_tibble()
+rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
 global_data <- crossing(juniors = c(TRUE, FALSE),
                         inactives = c(TRUE, FALSE),
