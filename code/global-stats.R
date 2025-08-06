@@ -2,9 +2,6 @@ library(tidyverse)
 
 
 
-top10 <- function(x) mean(tail(sort(x), 10))
-
-
 participation_gap <- function(rating_data) {
   rating_data %>%
     count(fed, sex, name = "no_of_players") %>%
@@ -78,14 +75,29 @@ perm_table %>%
   mutate(pt = str_c("$", sprintf("%.1f", ptmean), " \\pm ", sprintf("%.1f", ptsd), "$"),
          .keep = "unused") %>%
   mutate(obs = sprintf("%.1f", obs)) %>%
-  mutate(pval = sprintf("%.4f", pval)) %>%
+  mutate(pval = ifelse(pval == 0, "$< 10^{-4}$", sprintf("$%.4f$", pval))) %>%
   select(Metric = metric, Juniors = juniors, Inactives = inactives,
          `Rating floor` = floor, `Observed` = obs, `Permutation` = pt,
          `p-value` = pval, ` ` = signif) %>%
-  kableExtra::kbl(format = "latex", booktabs = TRUE, longtable = TRUE,
-                  linesep = c(rep("", 11), "\\addlinespace"), escape = FALSE,
-                  align = "llllrrrl",
-                  label = "tab:global-perm-SI", caption = "")
+  kableExtra::kbl(
+    format = "latex",
+    booktabs = TRUE,
+    longtable = TRUE,
+    linesep = c(rep("", 11), "\\addlinespace"),
+    escape = FALSE,
+    align = "llllrrrl",
+    label = "tab:global-perm-SI",
+    caption = str_c("Results for the global chess rating dataset. The first column ",
+                    "is the statistic; the next three are various data filters; ",
+                    "``Observed'' is the observed value of the metric (men minus ",
+                    "women); `Permutation'' is the mean plus/minus one standard ",
+                    "deviation of the one million permutation samples; and ",
+                    "``p-value'' is the p-value (computed to four decimal precision ",
+                    "via \\eqref{eq:ptrans}, where $f$ is the number of permutation ",
+                    "samples that are less than the observed value) plus a ",
+                    "parenthetical W or M in case the result is significant at the ",
+                    "0.05 level favoring either women (W) or men (M).")
+    )
 
 
 

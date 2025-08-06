@@ -10,6 +10,7 @@ participation_gap <- function(rating_data) {
     )
 }
 
+
 restrict_data <- function(rating_data, juniors, inactives, floor,
                           birth_uncertain = FALSE) {
   if (juniors) max_byear <- 2019 else max_byear <- 1999
@@ -57,7 +58,8 @@ crossing(juniors = c(TRUE, FALSE),
          rating_data = list(read_csv("data/rating-data.csv", col_types = "ccciiil")),
          .before = 1) %>%
   mutate(table = pmap(., compose(fedTableForOutput, federationTable))) %>%
-  mutate(table = map(table, \(x) knitr::kable(x, format = "latex", escape = FALSE))) %>%
+  mutate(table = map(table, \(x) kableExtra::kbl(x, format = "latex", escape = FALSE,
+                                                 booktabs = TRUE, linesep = ""))) %>%
   mutate(fname = str_c("data/federation-tables/fedtab-",
                        ifelse(juniors, "", "no"), "juniors-",
                        ifelse(inactives, "", "no"), "inactives-", floor, ".tex")) %>%
