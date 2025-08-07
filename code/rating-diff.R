@@ -55,10 +55,7 @@ read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_dodge(width = 0.75)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
-  labs(
-    x = "Rating floor",
-    y = expression(paste("Rating gap ", (M - W)))
-  ) +
+  labs(x = "Rating floor", y = "Rating gap") +
   facet_grid(metric ~ response, scale = "free_y", switch = "y") +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +
   scale_colour_viridis_d(name = "", option = "C", end = 0.85, direction = -1) +
