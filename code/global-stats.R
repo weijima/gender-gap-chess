@@ -72,21 +72,22 @@ perm_table %>%
     "top1" ~ "Top 1 gap",
     "sd" ~ "Gap in standard deviation"
   )) %>%
-  mutate(pt = str_c("$", sprintf("%.1f", ptmean), " \\pm ", sprintf("%.1f", ptsd), "$"),
+  mutate(pt = str_c(sprintf("%.1f", ptmean), " $\\pm$ ", sprintf("%.1f", ptsd)),
          .keep = "unused") %>%
   mutate(obs = sprintf("%.1f", obs)) %>%
-  mutate(pval = ifelse(pval == 0, "$< 10^{-4}$", sprintf("$%.4f$", pval))) %>%
+  mutate(pval = ifelse(pval == 0, "< 10\\textsuperscript{-4}",
+                       sprintf("%.4f", pval))) %>%
   select(Metric = metric, Juniors = juniors, Inactives = inactives,
          `Rating floor` = floor, `Observed` = obs, `Permutation` = pt,
          `p-value` = pval, ` ` = signif) %>%
   kableExtra::kbl(
     format = "latex",
     booktabs = TRUE,
-    longtable = TRUE,
+    longtable = FALSE,
     linesep = c(rep("", 11), "\\addlinespace"),
     escape = FALSE,
     align = "llllrrrl",
-    label = "tab:global-perm-SI",
+    label = "global-perm-SI",
     caption = str_c("Results for the global chess rating dataset. The first column ",
                     "is the statistic; the next three are various data filters; ",
                     "``Observed'' is the observed value of the metric (men minus ",
