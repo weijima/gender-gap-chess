@@ -1,5 +1,6 @@
 library(shiny)
 library(tidyverse)
+library(DT)
 
 
 
@@ -19,7 +20,7 @@ participation_gap <- function(rating_data) {
   rating_data |>
     count(fed, sex, name = "no_of_players") |>
     pivot_wider(names_from = "sex", values_from = "no_of_players", values_fill = 0) |>
-    mutate(frac_women = `F` / (`F` + `M`))
+    mutate(frac_women = W / (W + M))
 }
 
 
@@ -72,13 +73,14 @@ global_stats <- function(stats, metric, alpha) {
     stats$pval <  alpha & stats$ptpval <  0.5 ~ "slanted towards men",
     stats$pval >= alpha                 ~ "not significant"
   )
+  pval <- ifelse(stats$pval < 1e-4, "< 10<sup>-4</sup>", sprintf("%.4f", stats$pval))
   HTML(str_c(
     "<h4>Global data</h4>",
     "• Number of players: ", stats$W, " women, ", stats$M, " men", "<br>",
     "• ", metric_label, ": ", sprintf("%.1f", stats$obs) ,"<br>",
-    "• Permutation mean and standard deviation: ",
-    sprintf("%.1f", stats$ptmean), " &plusmn; ", sprintf("%.1f", stats$ptsd), "<br>",
-    "• p-value: ", sprintf("%.4f", stats$pval), " (", signif, ")"
+    "• Permutation mean ± standard deviation: ",
+    sprintf("%.1f", stats$ptmean), " ± ", sprintf("%.1f", stats$ptsd), "<br>",
+    "• p-value: ", pval, " (", signif, ")"
   ))
 }
 
@@ -165,7 +167,8 @@ renderDocUI <- function(documentationPath, panelID = "doc", header = "Documentat
 # Load and organize data ----------------------------------------------------------------
 
 rating_data <- read_rds("rating-data.rds") |>
-  restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000)
+  restrict_data(juniors = TRUE, inactives = TRUE, floor = 1000) |>
+  mutate(sex = ifelse(sex == "F", "W", "M"))
 
 null_stats <- read_rds("null-stats.rds")
 
@@ -173,13 +176,14 @@ age_experience <- read_rds("age-experience-tab.rds")
 
 main_table <- null_stats |>
   filter(fed != "ALL") |>
-  filter(stat %in% c("obs", "ptpval")) |>
   pivot_wider(names_from = stat, values_from = value) |>
   rename(y = obs, pval = ptpval) |>
-  relocate(y, .after = pval) |>
+  mutate(pval = 2 * pmin(pval, 1 - pval)) |>
   left_join(age_experience, by = join_by(metric, juniors, inactives, floor, fed)) |>
   select(!E & !A & !weight) |>
-  mutate(pval = 2 * pmin(pval, 1 - pval))
+  mutate(pt = str_c(sprintf("%.1f", ptmean), " ± ", sprintf("%.1f", ptsd)),
+         .keep = "unused") |>
+  relocate(y, .before = yP)
 
 global_table <- null_stats |>
   filter(fed == "ALL") |>
@@ -265,7 +269,7 @@ ui <- fluidPage(
       br(), br(), hr(),
       htmlOutput("stats"),
       hr(),
-      fluidRow(column(DT::DTOutput("table", width = "auto"), width = 7))
+      fluidRow(column(DTOutput("table", width = "auto"), width = 8))
     )
   )
 )
@@ -297,7 +301,6 @@ server <- function(input, output) {
         global_participation(juniors = input$juniors, inactives = input$inactives,
                              floor = input$floor, rating_data)
       ) |>
-      rename(W = `F`) |>
       as.list()
   )
 
@@ -337,15 +340,24 @@ server <- function(input, output) {
     simple_stats(dat())
   })
 
-  output$table <- DT::renderDT({
+  output$table <- renderDT({
     with_pval <- dat()$signif[1] != ""
     dat() |>
-      select(fed, `F`, `M`, gap, pval) |>
-      mutate(pval = round(pval, 4)) |>
+      select(fed, W, M, gap, pt, pval) |>
+      mutate(pval = ifelse(pval < 1e-4, "< 10<sup>-4</sup>", sprintf("%.4f", pval))) |>
       mutate(pval = if (with_pval) pval else NA_real_) |>
-      mutate(gap = round(gap, 2)) |>
-      rename(federation = fed, `no. of women` = `F`, `no. of men` = `M`,
-             `rating gap` = gap, `p-value` = pval)
+      mutate(gap = sprintf("%.1f", gap)) |>
+      rename(federation = fed, women = W, men = M, `rating gap` = gap,
+             permutation = pt, `p-value` = pval) |>
+      datatable(
+        rownames = FALSE,
+        escape = FALSE,
+        options = list(columnDefs = list(
+          list(className = "dt-center", targets = 0),
+          list(className = "dt-right", targets = 1:5)
+        ))
+      ) |>
+      formatStyle(columns = 0:5, fontFamily = "monospace")
   })
 }
 
