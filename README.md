@@ -26,9 +26,9 @@ Required non-standard hardware: none. However, reproducing the permutation resul
 
 #### Contents of the `code` directory
 
-* `age-experiance-figure.R`: Create a figure comparing the experience level (in terms of mean number of games played) and age between women and men, across all data filters.
+* `age-experience-figures.R`: Create scatter plots comparing age and experience across genders for particular data filters, together with histograms of federation-wise rating gaps.
 * `compare-Richard-Gyuri-data.R`: Making sure that the data which were independently collected and analyzed by different team members do line up.
-* `create-figures.R` and `create-figures-test.R`: Scripts generating histograms and scatterplots of rating differences corrected for participation, age, and experience.
+* `create-figures.R` and `create-figures-test.R`: Scripts generating histograms and scatter plots of rating differences corrected for participation, age, and experience.
 * `download-and-clean.R`: Automatically download and process the FIDE rating data. The final output consists of two files in the `data` directory: `raw-data.rds` (with data for all months between October 2012 and December 2019), and `rating-data.csv` (with data just for December 2019 - however, with the `games` column containing the total number of games played from Oct 2012 to Dec 2019).
 * `generate-perm-table-cluster.R`: A script that will create rating permutations of the ratings of women and men, for each federation, and for a given parameterization. Here "parameterization" means 1) whether junior players (those born after 1999) are excluded, 2) whether inactive players are excluded, 3) whether only players rated below a certain rating floor are excluded (the options are 1000, 1400, or 1600), and 4) which metric is to be calculated (mean, median, sd, top1, or top10). The purpose of this script is to act as one that can be submitted to a large computing cluster. It takes two command-line input parameters:
   - `rownum`: an integer between 1 and 60 (inclusive), determining which combination of the above parameters will be implemented.
