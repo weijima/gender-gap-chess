@@ -1,4 +1,3 @@
-# This script has the current Figure 3.
 library(tidyverse)
 library(patchwork)
 
