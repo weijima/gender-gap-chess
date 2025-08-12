@@ -5,7 +5,7 @@ sourceCpp("code/permutation-table.cpp")
 
 top1 <- max
 
-restrict_data <- function(rating_data, include_junio, include_inactive, min_rating,
+restrict_data <- function(rating_data, include_junior, include_inactive, min_rating,
                           birth_uncertain = FALSE) {
   if (include_junior) max_byear <- 2019 else max_byear <- 1999
   rating_data %>%
