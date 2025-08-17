@@ -77,25 +77,26 @@ perm_table %>%
   mutate(obs = sprintf("%.1f", obs)) %>%
   mutate(pval = ifelse(pval == 0, "< 10\\textsuperscript{-4}",
                        sprintf("%.4f", pval))) %>%
+  mutate(pval = str_c(pval, " ", signif)) %>%
   select(Metric = metric, Juniors = juniors, Inactives = inactives,
          `Rating floor` = floor, `Observed` = obs, `Permutation` = pt,
-         `p-value` = pval, ` ` = signif) %>%
+         `p-value` = pval) %>%
   kableExtra::kbl(
     format = "latex",
     booktabs = TRUE,
     longtable = FALSE,
     linesep = c(rep("", 11), "\\addlinespace"),
     escape = FALSE,
-    align = "llllrrrl",
+    align = "llllrrr",
     label = "global-perm-SI",
-    caption = str_c("Results for the global chess rating dataset. The first column ",
-                    "is the statistic; the next three are various data filters; ",
+    caption = str_c("Results for the global chess rating dataset. The first four ",
+                    "columns are the metric and various data filters; ",
                     "``Observed'' is the observed value of the metric (men minus ",
                     "women); `Permutation'' is the mean plus/minus one standard ",
                     "deviation of the one million permutation samples; and ",
-                    "``p-value'' is the p-value (computed to four decimal precision ",
-                    "via \\eqref{eq:ptrans}, where $f$ is the number of permutation ",
-                    "samples that are less than the observed value) plus a ",
+                    "``p-value'' is computed to four decimal precision ",
+                    "via \\eqref{eq:ptrans} (where $f$ is the number of permutation ",
+                    "samples that are less than the observed value), with a ",
                     "parenthetical W or M in case the result is significant at the ",
                     "0.05 level favoring either women (W) or men (M).")
     )
