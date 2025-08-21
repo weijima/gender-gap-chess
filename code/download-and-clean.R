@@ -82,7 +82,7 @@ clean_data <- function(data) {
     filter(!is.na(born)) %>% # This drops 18 rows with additional parsing problems!
     mutate(rating = as.numeric(rating), gms = as.integer(gms)) %>%
     mutate(active = !(flag %in% c("i", "wi"))) %>% # Player active?
-    select(-flag) %>% # Remove "flag" (because it is superseded by "active" above)
+    select(!flag) %>% # Remove "flag" (because it is superseded by "active" above)
     rename(games = gms) # Rename the column "gms" to "games"
 }
 
@@ -96,13 +96,13 @@ sum_games <- function(rating_data) {
     ungroup() %>%
     filter(year == max(year)) %>% # Filter for latest year in data
     filter(month == max(month)) %>% # Within that year, filter for latest month
-    select(-month, -year)
+    select(!month & !year)
 }
 
 
 
 # Download, merge, clean, and save data, then clean up downloaded files:
-tibble(exdir = fs::path_abs("data/tmp/"), # ASSUMES WORKING DIRECTORY IS: /code
+tibble(exdir = fs::path_abs("data/tmp/"), # ASSUMES WORKING DIRECTORY IS THE ROOT
        month_year = list( # All month-year combinations, from 2012 Oct to 2019 Dec:
          crossing(month = tolower(month.abb), year = 12:19) %>%
            filter(year > 12 | month %in% c("oct", "nov", "dec"))
