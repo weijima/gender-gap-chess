@@ -1,6 +1,9 @@
-## Data and code for the manuscript "Deconstructing the gender gap in chess ratings" (in prep).
+## Data and code for the manuscript "Deconstructing the gender gap in chess ratings" (in prep.)
 
-This project aims at a rigorous and comprehensive analysis of gender differences in the ratings of top-level chess players. The *participation rate hypothesis* states that the naively-observed gender difference between top-rated chess players might largely be a statistical artifact: since only about 10% of rated players are women, the tail end of their rating distribution is naturally undersampled compared to that of men. We quantify whether, and to what extent, the participation rate hypothesis explains observed rating differences between genders. We do so using a robust nonparametric statistical approach and a comprehensive, global dataset of over 340,000 internationally-rated chess players coming from 99 national federations.
+Persistent gender gaps in achievement are well-documented across competitive and STEM-related fields, yet the underlying drivers remain debated. Chess provides a unique opportunity to study such disparities due to its standardized, quantifiable skill metrics. While previous literature attributes the chess gender gap largely to differential participation rates, rigorous empirical evidence has been limited by restrictive parametric assumptions and incomplete controls for confounding variables. Using a comprehensive, global dataset of over 340,000 internationally rated chess players from 99 national federations, we introduce a nonparametric statistical approach to quantify the extent to which the gender gap in ratings, particularly among elite players, is explained by differences in participation rates, age, and playing experience. We find that these structural factors reduce, but do not eliminate, observed gender differences. However, the remaining difference turns out to be due to lower-rated women being relatively overrepresented in the data. When we only consider players rated above 1400-1600 Elo points, many federations exhibit a negligible gender gap or even favor women. Our findings suggest that innate gender differences in playing ability are implausible as an explanation for the chess gender gap, and also emphasize the need to explore broader social, psychological, and cultural influences beyond simple participation differences.
+
+This repository contains the computer code and data to replicate all our results.
+
 
 
 ### Software dependencies
@@ -21,12 +24,20 @@ R (tested with R 4.2.1, 4.2.2, and 4.3.3). Required R packages:
 * `shinyBS`: More utilities for creating interactive applications
 * `DT`: Searchable and sortable tables in interactive applications
 
-Required non-standard hardware: none. However, reproducing the permutation results with sufficiently many permutations (more than a hundred thousand per sample) does benefit from having access to a computing cluster.
+Required non-standard hardware: none. However, reproducing the permutation results with sufficiently many permutations (more than a hundred thousand per sample) greatly benefits from having access to a computing cluster.
 
 
 ### Contents of the `app` directory
 
-This directory contains all required files for running our interactive data explorer application locally, on one's own computer. To run it, simply click the "Run App" button in RStudio or execute `shiny::runApp(appDir = "./app")` from the console. (The latter method assumes that the working directory is set to be the at root of the project. Alternatively, if the `/app` subdirectory is the designated working directory, then `shiny::runApp()` suffices.)
+This directory contains all required files for running our interactive data explorer application locally, on one's own computer. To run it, simply click the "Run App" button in RStudio or execute
+
+`shiny::runApp(appDir = "./app")`
+
+from the console. The latter method assumes that the working directory is set to be the at root of the project. Alternatively, if the `/app` subdirectory is the designated working directory, then
+
+`shiny::runApp()`
+
+suffices.
 
 * `app.R`: An R Shiny application that can be run locally, as long as the other files in the same directory are also present. The application allows one to quickly and conveniently explore the rating data and permutation results, for all assumptions and data filters.
 * `age-experience-tab.rds`: Same as `/data/age-experience-tab.csv`, but in compressed `.rds` format. See description below, under "Contents of the `data` directory". The reason the same data are included here as well is to make their interaction with the application self-contained and not having to rely on files in other directories. (The same goes for the other two data files below.
