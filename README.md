@@ -3,7 +3,7 @@
 This project aims at a rigorous and comprehensive analysis of gender differences in the ratings of top-level chess players. The *participation rate hypothesis* states that the naively-observed gender difference between top-rated chess players might largely be a statistical artifact: since only about 10% of rated players are women, the tail end of their rating distribution is naturally undersampled compared to that of men. We quantify whether, and to what extent, the participation rate hypothesis explains observed rating differences between genders. We do so using a robust nonparametric statistical approach and a comprehensive, global dataset of over 340,000 internationally-rated chess players coming from 99 national federations.
 
 
-#### Software dependencies
+### Software dependencies
 
 R (tested with R 4.2.1, 4.2.2, and 4.3.3). Required R packages:
 
@@ -24,7 +24,9 @@ R (tested with R 4.2.1, 4.2.2, and 4.3.3). Required R packages:
 Required non-standard hardware: none. However, reproducing the permutation results with sufficiently many permutations (more than a hundred thousand per sample) does benefit from having access to a computing cluster.
 
 
-#### Contents of the `app` directory
+### Contents of the `app` directory
+
+This directory contains all required files for running our interactive data explorer application locally, on one's own computer. To run it, simply click the "Run App" button in RStudio or execute `shiny::runApp(appDir = "./app")` from the console. (The latter method assumes that the working directory is set to be the at root of the project. Alternatively, if the `/app` subdirectory is the designated working directory, then `shiny::runApp()` suffices.)
 
 * `app.R`: An R Shiny application that can be run locally, as long as the other files in the same directory are also present. The application allows one to quickly and conveniently explore the rating data and permutation results, for all assumptions and data filters.
 * `age-experience-tab.rds`: Same as `/data/age-experience-tab.csv`, but in compressed `.rds` format. See description below, under "Contents of the `data` directory". The reason the same data are included here as well is to make their interaction with the application self-contained and not having to rely on files in other directories. (The same goes for the other two data files below.
@@ -33,7 +35,7 @@ Required non-standard hardware: none. However, reproducing the permutation resul
 * `documentation.md`: A Markdown file containing the description of the application. It is viewable, in HTML format, from within the application itself.
 
 
-#### Contents of the `code` directory
+### Contents of the `code` directory
 
 * `age-experience-figures.R`: Create scatter plots comparing age and experience across genders for particular data filters, together with histograms of federation-wise rating gaps.
 * `download-and-clean.R`: Automatically download and process the FIDE rating data. The final output consists of two files in the `data` directory: `raw-data.rds` (with data for all months between October 2012 and December 2019), and `rating-data.csv` (with data just for December 2019 - however, with the `games` column containing the total number of games played from Oct 2012 to Dec 2019).
@@ -55,7 +57,7 @@ Required non-standard hardware: none. However, reproducing the permutation resul
 * `perm-test-global`: A directory with versions of the scripts acting on the rating data globally; i.e., by disregarding information on federation. Instead, all players are lumped into one pool for analysis.
 
 
-#### Contents of the `data` directory
+### Contents of the `data` directory
 
 * `null-stats.csv`: The result from merging the outputs of `code/stats-from-nulls.R` and `/code/perm-test-global/stats-from-nulls-global.R`. This table has the following columns:
   - `juniors`: `TRUE` or `FALSE`, depending on whether players born after 1999 are included (`TRUE`) or excluded (`FALSE`)
@@ -89,13 +91,13 @@ Required non-standard hardware: none. However, reproducing the permutation resul
 * `knapp-rank-per-fed.csv`: The output for the per-federation rating distributions from `code/knapp-rank-calculation.R`.
 
 
-#### Contents of the `figures` directory
+### Contents of the `figures` directory
 
 * `global-fig.pdf`: Figure 1 in the main text, with histograms of the global rating distributions for various data filters.
 * Twelve files with the names `age-exp-[no]juniors-[no]inactives-1[0|4|6]00.pdf`: Figure 2 in the main text and Figures S1-S11 in the Supplement.
 * `summary-fig.pdf`: Figure 3 in the main text, showing raw, P-adjusted, and PEA-adjusted per-federation rating distributions side by side.
 
 
-#### Contents of the `literature` directory
+### Contents of the `literature` directory
 
 Various related articles, both academic (in the sub-directory `academic`) and other (in the sub-directory `other`).
