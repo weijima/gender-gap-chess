@@ -57,7 +57,8 @@ plot_data %>%
   geom_text(data = label_data, x = 2500, y = 0.21, size = 3, parse = TRUE,
             aes(label = str_c("italic(D) == ", round(D, 2)))) +
   geom_vline(data = . %>% select(filter, floor_txt, floor) %>% distinct(),
-             aes(xintercept = floor), linetype = "dashed", alpha = 0.5) +
+             aes(xintercept = floor),
+             linetype = "dashed", alpha = 0.8, colour = "grey80") +
   labs(x = "Rating", y = "Proportion") +
   facet_grid(filter ~ floor_txt, scales = "free_x", switch = "y") +
   scale_x_continuous(limits = c(1000,2900), breaks = c(1000,1700,2400), expand = c(0,0))+
@@ -67,9 +68,9 @@ plot_data %>%
   guides(fill = "none") +
   theme_minimal() +
   theme(panel.grid = element_blank(),
-        axis.line = element_line(colour = "grey80"),
+        axis.line = element_blank(),
         axis.ticks = element_line(colour = "grey80"),
-        panel.border = element_blank(),
+        panel.border = element_rect(colour = "grey80", fill = NA),
         panel.background = element_blank(),
         legend.title = element_blank(),
         legend.position = "bottom",

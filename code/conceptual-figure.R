@@ -10,11 +10,11 @@ tibble(Rating = seq(1000, 2700, by = 100)) %>%
   separate(col = name, into = c("gender", "scenario"), sep = "_") %>%
   mutate(Proportion = Proportion / sum(Proportion), .by = c(gender, scenario)) %>%
   mutate(gender = fct_relevel(gender, "Women", "Men")) %>%
-  mutate(scenario = case_when(
-    scenario == "1" ~ str_c("1. High-rated women underrepresented"),
-    scenario == "2" ~ str_c("2. Shifted rating distributions"),
-    scenario == "3" ~ str_c("3. Low-rated women overrepresented")
-  )) %>%
+  mutate(scenario = as_factor(case_when(
+    scenario == "1" ~ str_c("High-rated women underrepresented"),
+    scenario == "2" ~ str_c("Shifted rating distributions"),
+    scenario == "3" ~ str_c("Low-rated women overrepresented")
+  ))) %>%
   ggplot() +
   geom_line(aes(x = Rating, y = Proportion, colour = gender)) +
   geom_area(aes(x = Rating, y = Proportion, fill = gender),
@@ -28,7 +28,7 @@ tibble(Rating = seq(1000, 2700, by = 100)) %>%
   facet_wrap(~ scenario) +
   theme_minimal() +
   theme(panel.grid = element_blank(),
-        axis.line = element_line(colour = "grey80"),
+        axis.line = element_blank(),
         axis.ticks = element_line(colour = "grey80"),
         panel.border = element_rect(colour = "grey80", fill = NA),
         panel.background = element_blank(),
@@ -36,3 +36,4 @@ tibble(Rating = seq(1000, 2700, by = 100)) %>%
         legend.position = "bottom",
         strip.background = element_blank(),
         strip.placement = "outside")
+#ggsave("figures/conceptual.pdf", width = 7, height = 3)

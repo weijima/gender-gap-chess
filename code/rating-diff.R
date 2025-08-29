@@ -67,9 +67,9 @@ read_csv("data/null-stats.csv", col_types = "llicccd") %>%
          fill = guide_legend(nrow = 1, order = 2)) +
   theme_minimal(base_size = 14) +
   theme(panel.grid = element_blank(),
-        axis.line = element_line(colour = "grey80"),
+        axis.line = element_blank(),
         axis.ticks = element_line(colour = "grey80"),
-        panel.border = element_blank(),
+        panel.border = element_rect(colour = "grey80", fill = NA),
         panel.background = element_blank(),
         strip.background = element_blank(),
         strip.placement = "outside",
