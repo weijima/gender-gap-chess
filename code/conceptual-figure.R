@@ -1,7 +1,7 @@
 library(tidyverse)
 
 
-tibble(Rating = seq(1000, 2700, by = 100)) %>%
+tibble(Rating = seq(1000, 2900, by = 100)) %>%
   mutate(Men_1 = dnorm(Rating, 1600, 350), Men_2 = Men_1, Men_3 = Men_1) %>%
   mutate(Women_1 = Men_1 * (tanh((2200 - Rating) / 50) + 1) / 2) %>%
   mutate(Women_2 = dnorm(Rating, 1400, 350)) %>%
@@ -11,9 +11,9 @@ tibble(Rating = seq(1000, 2700, by = 100)) %>%
   mutate(Proportion = Proportion / sum(Proportion), .by = c(gender, scenario)) %>%
   mutate(gender = fct_relevel(gender, "Women", "Men")) %>%
   mutate(scenario = as_factor(case_when(
-    scenario == "1" ~ str_c("High-rated women underrepresented"),
-    scenario == "2" ~ str_c("Shifted rating distributions"),
-    scenario == "3" ~ str_c("Low-rated women overrepresented")
+    scenario == "1" ~ str_c("High-rated women\nunderrepresented"),
+    scenario == "2" ~ str_c("Shifted rating\ndistributions"),
+    scenario == "3" ~ str_c("Low-rated women\noverrepresented")
   ))) %>%
   ggplot() +
   geom_line(aes(x = Rating, y = Proportion, colour = gender)) +
@@ -36,4 +36,4 @@ tibble(Rating = seq(1000, 2700, by = 100)) %>%
         legend.position = "bottom",
         strip.background = element_blank(),
         strip.placement = "outside")
-#ggsave("figures/conceptual.pdf", width = 7, height = 3)
+#ggsave("figures/conceptual.pdf", width = 4.8, height = 2.5)
