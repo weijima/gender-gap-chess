@@ -106,6 +106,7 @@ suffices.
 
 ### Contents of the `figures` directory
 
+* `conceptual.pdf`: A conceptual figure illustrating how the same overall rating gap can arise from multiple underlying causes.
 * `global-fig.pdf`: Figure 1 in the main text, with histograms of the global rating distributions for various data filters.
 * Twelve files with the names `age-exp-[no]juniors-[no]inactives-1[0|4|6]00.pdf`: Figure 2 in the main text and Figures S1-S11 in the Supplement.
 * `summary-fig.pdf`: Figure 3 in the main text, showing raw, P-adjusted, and PEA-adjusted per-federation rating distributions side by side.
