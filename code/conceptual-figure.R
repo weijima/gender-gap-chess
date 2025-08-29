@@ -5,7 +5,7 @@ tibble(Rating = seq(1000, 2900, by = 100)) %>%
   mutate(Men_1 = dnorm(Rating, 1600, 350), Men_2 = Men_1, Men_3 = Men_1) %>%
   mutate(Women_1 = Men_1 * (tanh((2200 - Rating) / 50) + 1) / 2) %>%
   mutate(Women_2 = dnorm(Rating, 1400, 350)) %>%
-  mutate(Women_3 = Men_1 * (1 + 0.7*exp(-(Rating - 1500) / 180))) %>%
+  mutate(Women_3 = Men_1 * (1 + 0.2*exp(-(Rating - 1400) / 180))) %>%
   pivot_longer(!Rating, values_to = "Proportion") %>%
   separate(col = name, into = c("gender", "scenario"), sep = "_") %>%
   mutate(Proportion = Proportion / sum(Proportion), .by = c(gender, scenario)) %>%
