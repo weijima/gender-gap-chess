@@ -76,4 +76,4 @@ plot_data %>%
         legend.position = "bottom",
         strip.background = element_blank(),
         strip.placement = "outside")
-#ggsave("figures/global-fig.pdf", width = 4.8, height = 5.2)
+#ggsave("figures/global-fig.pdf", device = cairo_pdf, width = 4.8, height = 5.2)

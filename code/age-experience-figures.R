@@ -209,4 +209,6 @@ crossing(
   mutate(fname = str_c("figures/age-exp-",
                        ifelse(juniors, "", "no"), "juniors-",
                        ifelse(inactives, "", "no"), "inactives-", floor, ".pdf")) %>%
-  mutate(plt = walk2(plt, fname, \(p, f) ggsave(f, p, width = 10, height = 7)))
+  mutate(plt = walk2(plt, fname, \(p, f) {
+                     ggsave(f, p, device = cairo_pdf, width = 10, height = 7)
+  } ))

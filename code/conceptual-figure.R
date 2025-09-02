@@ -36,4 +36,4 @@ tibble(Rating = seq(1000, 2900, by = 100)) %>%
         legend.position = "bottom",
         strip.background = element_blank(),
         strip.placement = "outside")
-#ggsave("figures/conceptual.pdf", width = 4.8, height = 2.5)
+#ggsave("figures/conceptual.pdf", device = cairo_pdf, width = 4.8, height = 2.5)

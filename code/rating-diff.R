@@ -81,7 +81,7 @@ read_csv("data/null-stats.csv", col_types = "llicccd") %>%
         legend.margin = margin(0, 0, 0, 0),
         legend.background = element_blank(),
         plot.margin = unit(c(0.1, 0.1, 1.3, 0.1), "cm"))
-#ggsave("figures/summary-fig.pdf", width = 10, height = 8.57)
+#ggsave("figures/summary-fig.pdf", device = cairo_pdf, width = 10, height = 8.57)
 
 
 read_csv("data/null-stats.csv", col_types = "llicccd") %>%
