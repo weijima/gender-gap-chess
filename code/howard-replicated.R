@@ -65,10 +65,10 @@ joint_dat %>%
     sd_diff = sd(value),
     N = n(),
     SEM = sd_diff / sqrt(N),
-    CI = SEM * qt(1 - 0.025, N - 1),
+    CI = min(SEM * qt(1 - 0.025, N - 1), 300),
     .by = c(juniors, inactives, floor, metric, class)
   ) %>%
-  filter(metric == "top10") %>%
+  filter(metric == "top1") %>%
   mutate(class = fct_relevel(class, "5% or fewer women", "5-25% women")) %>%
   mutate(filter = case_when(
     juniors & inactives   ~ "With juniors,\nwith inactives",
@@ -92,7 +92,7 @@ joint_dat %>%
 
 
 joint_dat %>%
-  filter(metric == "top1") %>%
+  filter(metric == "mean") %>%
   mutate(filter = case_when(
     juniors & inactives   ~ "With juniors,\nwith inactives",
     juniors & !inactives  ~ "With juniors,\nw/o inactives",
@@ -107,6 +107,26 @@ joint_dat %>%
   geom_point(color = viridis::plasma(1)) +
   geom_smooth(method = lm, se = FALSE, alpha = 0.3,
               color = viridis::plasma(1, begin = 0.5)) +
-  facet_grid(filter ~ floor_txt) +
+  facet_grid(floor_txt ~ filter, scales = "free_y") +
   labs(x = NULL, y = "Mean of rating differences") +
-  theme_bw()
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_line(colour = "grey80"),
+        panel.border = element_rect(colour = "grey80", fill = NA),
+        panel.background = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "bottom",
+        strip.background = element_blank(),
+        strip.placement = "outside")
+
+
+joint_dat %>%
+  select(!`F` & !`M`) %>%
+  nest(data = fed | value | frac_W) %>%
+  mutate(fit = map(data, \(x) broom::tidy(lm(value ~ frac_W, data = x)))) %>%
+  unnest(fit) %>%
+  filter(term == "frac_W") %>%
+  select(!data & !term) %>%
+  filter(estimate >= 0) %>%
+  arrange(p.value)
