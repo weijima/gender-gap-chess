@@ -53,23 +53,6 @@ joint_dat <-
 
 
 joint_dat %>%
-  mutate(class = case_when(
-    frac_W <= 0.05                  ~ "5% or fewer women",
-    frac_W >= 0.25                  ~ "25% or more women",
-    frac_W >  0.05 & frac_W <  0.25 ~ "5-25% women",
-    TRUE                            ~ NA
-  )) %>%
-  drop_na() %>%
-  summarize(
-    mean_diff = mean(value),
-    sd_diff = sd(value),
-    N = n(),
-    SEM = sd_diff / sqrt(N),
-    CI = min(SEM * qt(1 - 0.025, N - 1), 300),
-    .by = c(juniors, inactives, floor, metric, class)
-  ) %>%
-  filter(metric == "top1") %>%
-  mutate(class = fct_relevel(class, "5% or fewer women", "5-25% women")) %>%
   mutate(filter = case_when(
     juniors & inactives   ~ "With juniors,\nwith inactives",
     juniors & !inactives  ~ "With juniors,\nw/o inactives",
@@ -80,45 +63,35 @@ joint_dat %>%
                               "With juniors,\nwith inactives",
                               "W/o juniors,\nwith inactives")) %>%
   mutate(floor_txt = str_c("Rating floor: ", floor)) %>%
-  ggplot(aes(x = class, y = mean_diff,
-             ymin = mean_diff - CI, ymax = mean_diff + CI, group = 0)) +
-  geom_point(color = viridis::plasma(1)) +
-  geom_errorbar(width = 0.2, color = viridis::plasma(1)) +
-  geom_line(alpha = 0.3, color = viridis::plasma(1)) +
-  facet_grid(filter ~ floor_txt) +
-  labs(x = NULL, y = "Mean of rating differences") +
-  theme_bw()
-
-
-
-joint_dat %>%
-  filter(metric == "mean") %>%
-  mutate(filter = case_when(
-    juniors & inactives   ~ "With juniors,\nwith inactives",
-    juniors & !inactives  ~ "With juniors,\nw/o inactives",
-    !juniors & inactives  ~ "W/o juniors,\nwith inactives",
-    !juniors & !inactives ~ "W/o juniors,\nw/o inactives"
-  )) %>%
-  mutate(filter = fct_relevel(filter, "With juniors,\nw/o inactives",
-                              "With juniors,\nwith inactives",
-                              "W/o juniors,\nwith inactives")) %>%
-  mutate(floor_txt = str_c("Rating floor: ", floor)) %>%
-  ggplot(aes(x = frac_W, y = value)) +
-  geom_point(color = viridis::plasma(1)) +
-  geom_smooth(method = lm, se = FALSE, alpha = 0.3,
-              color = viridis::plasma(1, begin = 0.5)) +
-  facet_grid(floor_txt ~ filter, scales = "free_y") +
-  labs(x = NULL, y = "Mean of rating differences") +
-  theme_minimal() +
-  theme(panel.grid = element_blank(),
-        axis.line = element_blank(),
-        axis.ticks = element_line(colour = "grey80"),
-        panel.border = element_rect(colour = "grey80", fill = NA),
-        panel.background = element_blank(),
-        legend.title = element_blank(),
-        legend.position = "bottom",
-        strip.background = element_blank(),
-        strip.placement = "outside")
+  nest(data = !metric) %>%
+  mutate(metric_lab = as_factor(case_when(
+    metric == "mean"  ~ "overall mean gap",
+    metric == "top10" ~ "top 10 gap",
+    metric == "top1"  ~ "top 1 gap"
+  ))) %>%
+  mutate(plot = map2(metric_lab, data, \(metric_lab, data) {
+    ggplot(data, aes(x = frac_W, y = value)) +
+      geom_point(color = viridis::plasma(1)) +
+      geom_smooth(method = lm, se = FALSE, alpha = 0.3,
+                  color = viridis::plasma(1, begin = 0.5)) +
+      facet_grid(floor_txt ~ filter, scales = "free_y") +
+      scale_x_continuous(breaks = c(0, 0.15, 0.3), labels = scales::percent) +
+      labs(x = "Proportion of women per federation",
+           y = str_c("Average ", metric_lab, " per federation")) +
+      theme_minimal() +
+      theme(panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.ticks = element_line(colour = "grey80"),
+            panel.border = element_rect(colour = "grey80", fill = NA),
+            panel.background = element_blank(),
+            legend.title = element_blank(),
+            legend.position = "bottom",
+            strip.background = element_blank(),
+            strip.placement = "outside")
+  })) %>%
+  mutate(metric = walk2(metric, plot, \(metric, plot) {
+    ggsave(str_c("figures/particip-", metric, ".pdf"), plot, width = 6, height = 4.5)
+  } ))
 
 
 joint_dat %>%
