@@ -22,7 +22,7 @@ data_inact <-
 
 
 data_inact %>%
-  mutate(age = 2019L - as.integer(born)) %>%
+  mutate(age = 2019L - as.integer(born) - 1L) %>%
   filter(age <= 80) %>%
   filter(!(year == 2012 & month == 10)) %>%
   mutate(sex = fct_relevel(ifelse(sex == "F", "Women", "Men"), "Women", "Men")) %>%
