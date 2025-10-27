@@ -56,7 +56,7 @@ label_data <- summary_plot_data %>%
   distinct(metric, response) %>%
   arrange(metric, response) %>%
   mutate(label = LETTERS[1:9]) %>%
-  mutate(hjust = c(3.8, 3.8, 3.6, 3.6, 3.8, 4.0, 3.3, 3.6, 8.5))
+  mutate(hjust = c(3.9, 4.0, 3.6, 3.6, 3.8, 4.0, 3.3, 3.6, 8.5))
 
 
 summary_plot_data %>%
