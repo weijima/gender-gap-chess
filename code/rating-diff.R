@@ -22,7 +22,7 @@ human_readable_labels <- function(data) {
 }
 
 
-read_csv("data/null-stats.csv", col_types = "llicccd") %>%
+summary_plot_data <- read_csv("data/null-stats.csv", col_types = "llicccd") %>%
   filter(fed != "ALL", stat %in% c("obs", "ptpval")) %>%
   pivot_wider(names_from = stat, values_from = value) %>%
   rename(y = obs, raw_pval = ptpval) %>%
@@ -49,12 +49,24 @@ read_csv("data/null-stats.csv", col_types = "llicccd") %>%
     "yP" ~ "Participation-adjusted\n",
     "yPEA" ~ "PEA-adjusted\n"
   )) %>%
-  mutate(response = fct_relevel(response, "Unadjusted\n","Participation-adjusted\n")) %>%
+  mutate(response = fct_relevel(response, "Unadjusted\n","Participation-adjusted\n"))
+
+
+label_data <- summary_plot_data %>%
+  distinct(metric, response) %>%
+  arrange(metric, response) %>%
+  mutate(label = LETTERS[1:9]) %>%
+  mutate(hjust = c(3.8, 3.8, 3.6, 3.6, 3.8, 4.0, 3.3, 3.6, 8.5))
+
+
+summary_plot_data %>%
   ggplot() +
   geom_boxplot(aes(x = floor, y = gap, fill = filter), outlier.shape = NA) +
   geom_point(aes(x = floor, y = gap, colour = filter, alpha = signif, shape = signif),
              position = position_dodge(width = 0.75)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
+  geom_text(data = label_data, x = "1000", y = Inf, size = 5, vjust = 1.5,
+            aes(label = label, hjust = hjust)) +
   labs(x = "Rating floor", y = "Rating gap") +
   facet_grid(metric ~ response, scale = "free_y", switch = "y") +
   scale_shape_manual(name = "", values = c(1, 19, 19), guide = "none") +

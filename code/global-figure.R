@@ -56,6 +56,8 @@ plot_data %>%
             colour = NA, position = "identity", alpha = 0.15) +
   geom_text(data = label_data, x = 2500, y = 0.21, size = 3, parse = TRUE,
             aes(label = str_c("italic(D) == ", round(D, 2)))) +
+  geom_text(data = label_data, x = 1120, y = 0.21, size = 3,
+            aes(label = label)) +
   geom_vline(data = . %>% select(filter, floor_txt, floor) %>% distinct(),
              aes(xintercept = floor),
              linetype = "dashed", alpha = 0.8, colour = "grey80") +
