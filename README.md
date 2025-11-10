@@ -1,6 +1,6 @@
-## Data and code for the manuscript "Deconstructing the gender gap in chess ratings" (in prep.)
+## Data and code for the manuscript "From participation to attrition: junior and low‑rated women drive the gender gap in chess ratings"
 
-Persistent gender gaps in achievement are well-documented across competitive and STEM-related fields, yet the underlying drivers remain debated. Chess provides a unique opportunity to study such disparities due to its standardized, quantifiable skill metrics. While previous literature attributes the chess gender gap largely to differential participation rates, rigorous empirical evidence has been limited by restrictive parametric assumptions and incomplete controls for confounding variables. Using a comprehensive, global dataset of over 340,000 internationally rated chess players from 99 national federations, we introduce a nonparametric statistical approach to quantify the extent to which the gender gap in ratings, particularly among elite players, is explained by differences in participation rates, age, and playing experience. We find that these structural factors reduce, but do not eliminate, observed gender differences. However, the remaining difference turns out to be due to lower-rated women being relatively overrepresented in the data. When we only consider players rated above 1400-1600 Elo points, many federations exhibit a negligible gender gap or even favor women. Our findings suggest that innate gender differences in playing ability are implausible as an explanation for the chess gender gap, and also emphasize the need to explore broader social, psychological, and cultural influences beyond simple participation differences.
+Gender gaps in achievement are well-documented across competitive and STEM-related fields, yet the underlying drivers remain debated. Chess provides a unique opportunity to study such disparities due to its standardized, quantifiable skill metrics. While some previous literature attributes the chess gender gap largely to differential participation rates, rigorous empirical evidence has been limited by restrictive parametric assumptions and incomplete controls for confounding variables. Using a comprehensive, global dataset of over 340,000 internationally rated chess players from 99 national federations, we introduce a nonparametric statistical approach to quantify the extent to which the gender gap in ratings, particularly among elite players, is explained by differences in participation rates, age, and playing experience. We find that these structural factors reduce, but do not eliminate, observed gender differences. However, the remaining difference turns out to be due to lower-rated women being relatively overrepresented in the data. When considering players at club level or higher, many federations exhibit a negligible gender gap or even favor women. We also present evidence that women are more likely to drop out of chess at an early stage, which would explain the residual low-rated observations in the data. Together, these findings suggest that higher attrition rates, rather than innate gender differences, are more likely to explain the chess gender gap, and also emphasize the need to explore broader social, psychological, and cultural influences beyond simple participation differences.
 
 This repository contains the computer code and data to replicate all our results.
 
@@ -55,7 +55,6 @@ suffices.
 * `conceptual-figure.R`: A figure showing hypothetical gender-wise rating distributions, to illustrate various possible sources of the rating difference.
 * `download-and-clean.R`: Automatically download and process the FIDE rating data. The final output consists of two files in the `data` directory: `raw-data.rds` (with data for all months between October 2012 and December 2019), and `rating-data.csv` (with data just for December 2019 - however, with the `games` column containing the total number of games played from Oct 2012 to Dec 2019).
 * `dropout-analysis`: Figure showing the distribution of the ages of players at the time they become inactive, broken down by gender.
-* `gap-vs-participation`: Plotting raw observed rating differences between genders per federation against the participation gap in those federations. This helps check whether a lower participation gap also implies a lower rating gap.
 * `generate-perm-table-cluster.R`: A script that will create rating permutations of the ratings of women and men, for each federation, and for a given parameterization. Here "parameterization" means 1) whether junior players (those born after 1999) are excluded, 2) whether inactive players are excluded, 3) whether only players rated below a certain rating floor are excluded (the options are 1000, 1400, or 1600), and 4) which metric is to be calculated (mean, median, sd, top1, or top10). The purpose of this script is to act as one that can be submitted to a large computing cluster. It takes two command-line input parameters:
   - `rownum`: an integer between 1 and 60 (inclusive), determining which combination of the above parameters will be implemented.
   - `perms`: a positive integer, setting the number of random permutations of a given federation's ratings to be generated. For example, if `perms` is `100`, then the ratings for women and men of any given federation will be randomly reshuffled 100 times, and the assigned metric (mean, median, sd, top1, or top10) calculated over those permutations. (*Note:* in practice, at least one million permutations are required for all parameterizations to reach reasonable convergence.)
@@ -71,7 +70,10 @@ suffices.
 * `rating-diff.R`: Obtain the raw, participation-corrected, and participation-, experience-, and age-corrected rating gaps. Results obtained for each federation and parameterization. Currently the script creates a plot, summarizing results across federations via box plots for each parameterization. It also creates two table-like figures (one for global, one for per-federation data) showing what fraction of the observed gender gap is explained by the participation rate hypothesis.
 * `stats-from-nulls.R`: This script processes the output generated by `generate-perm-table-cluster.R` (which tends to be massive, in case the number of permutations is large), and saves them in a single CSV file.
 * `weighted-regression.R`: Predicting the (participation-corrected) rating difference between women and men per federation, using age and experience as the predictors (without interaction effects). Experience is defined here as the number of games played by a player between Oct 2012 and Dec 2019 (which is the extent of the data available from FIDE). The regression is weighted, with the weights being the inverse variances of the permutation results per federation.
-* `perm-test-global`: A directory with versions of the scripts acting on the rating data globally; i.e., by disregarding information on federation. Instead, all players are lumped into one pool for analysis.
+* `perm-test-global`: A directory with versions of the scripts acting on the rating data globally; i.e., by disregarding information on federation. Instead, all players are lumped into one pool for analysis. It has the following files:
+  - `generate-perm-table-cluster-global.R`: As `generate-perm-table-cluster.R`, but without breaking the data down by federations.
+  - `generate-perm-table-global.R`: As `generate-perm-table.R`, but without breaking the data down by federations.
+  - `launch-global.R`: As `launch.R` but calling `generate-perm-table-cluster-global.R` instead of `generate-perm-table-cluster.R`.
 
 
 
@@ -104,7 +106,7 @@ suffices.
   - `games`: the number of games played by the player between Oct 2012 and Dec 2019 (summed up using all the monthly FIDE rating lists in between)
   - `born`: the year in which the player was born; unknown or corrupted values are all replaced by `0`
   - `active`: `TRUE` if the player was still active as of December 2019; `FALSE` otherwise
-* `raw-data.rds`: A compressed table with all FIDE data between Oct 2012 and Dec 2019. It is also generated by `download-and-clean.R`, and its structure is almost the same as for `rating-data.csv`. The differences are: there are two extra columns (month and year, at which the data were published); the `games` column means the number of games played in just the corresponding month and year; and the same player ID may appear many times (documenting a player's rating and number of games played in each month and year).
+* `raw-data.rds`: A compressed table with all FIDE data between Oct 2012 and Dec 2019. It can be generated with `download-and-clean.R`. Its structure is almost the same as for `rating-data.csv`. The differences are: there are two extra columns (month and year, at which the data were published); the `games` column means the number of games played in just the corresponding month and year; and the same player ID may appear many times (documenting a player's rating and number of games played in each month and year).
 * `knapp-rank-global.csv`: The output for the global rating distribution from `code/knapp-rank-calculation.R`.
 * `knapp-rank-per-fed.csv`: The output for the per-federation rating distributions from `code/knapp-rank-calculation.R`.
 * `global-stat-data.csv`: Summary statistics on the global rating distribution, from Mann-Whitney and Kolmogorov-Smirnov tests.
@@ -113,15 +115,13 @@ suffices.
 
 ### Contents of the `figures` directory
 
-* `conceptual.pdf`: A conceptual figure illustrating how the same overall rating gap can arise from multiple underlying causes.
-* `global-fig.pdf`: Figure 1 in the main text, with histograms of the global rating distributions for various data filters.
 * Twelve files with the names `age-exp-[no]juniors-[no]inactives-1[0|4|6]00.pdf`: Figure 2 in the main text and Figures S1-S11 in the Supplement.
+* `dropout.pdf`: Figure 4 in the main text, with the distribution of player ages at the time they become inactive, broken down by gender.
+* `global-fig.pdf`: Figure 1 in the main text, with histograms of the global rating distributions for various data filters.
 * `summary-fig.pdf`: Figure 3 in the main text, showing raw, P-adjusted, and PEA-adjusted per-federation rating distributions side by side.
-* `dropout.pdf`: Distribution of the ages of players at the time they become inactive, broken down by gender.
-* `particip-[mean|top10|top1].pdf`: Three figures with the raw observed rating differences between genders per federation along the y-axis, and the participation gap in those federations along the x-axis. The three figures differ in whether the overall mean gap, the top 10 gap, or the top 1 gap is plotted along the y-axis.
 
 
 
-### Contents of the `literature` directory
+### Contents of the `manuscript` directory
 
-Various related articles, both academic (in the sub-directory `academic`) and other (in the sub-directory `other`).
+The manuscript, in a single PDF file (main text plus supporting information).
