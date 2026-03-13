@@ -1,9 +1,4 @@
-## Data and code for the manuscript "From participation to attrition: junior and low‑rated women drive the gender gap in chess ratings"
-
-Gender gaps in achievement are well-documented across competitive and STEM-related fields, yet the underlying drivers remain debated. Chess provides a unique opportunity to study such disparities due to its standardized, quantifiable skill metrics. While some previous literature attributes the chess gender gap largely to differential participation rates, rigorous empirical evidence has been limited by restrictive parametric assumptions and incomplete controls for confounding variables. Using a comprehensive, global dataset of over 340,000 internationally rated chess players from 99 national federations, we introduce a nonparametric statistical approach to quantify the extent to which the gender gap in ratings, particularly among elite players, is explained by differences in participation rates, age, and playing experience. We find that these structural factors reduce, but do not eliminate, observed gender differences. However, the remaining difference turns out to be due to lower-rated women being relatively overrepresented in the data. When considering players at club level or higher, many federations exhibit a negligible gender gap or even favor women. We also present evidence that women are more likely to drop out of chess at an early stage, which would explain the residual low-rated observations in the data. Together, these findings suggest that higher attrition rates, rather than innate gender differences, are more likely to explain the chess gender gap, and also emphasize the need to explore broader social, psychological, and cultural influences beyond simple participation differences.
-
-This repository contains the computer code and data to replicate all our results.
-
+## Data and code for the manuscript "Deconstructing the gender gap in chess ratings"
 
 
 ### Software dependencies
