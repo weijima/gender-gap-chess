@@ -13,3 +13,6 @@ rsconnect*
 /data/tmp
 /data/permdat
 /literature*
+/manuscript*
+*.sh
+*.out
