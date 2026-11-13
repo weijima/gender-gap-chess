@@ -1,9 +1,7 @@
 library(tidyverse)
 library(Rcpp)
 
-sourceCpp("code/permutation-table.cpp")
-
-top1 <- max
+sourceCpp("code/permutation-fast.cpp")
 
 participation_gap <- function(rating_data) {
   rating_data %>%
@@ -29,12 +27,12 @@ restrict_data <- function(rating_data, include_junior, include_inactive, min_rat
     filter(fed %in% federations(., min_players))
 }
 
-perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
+perm_generator <- function(rating_data, juniors, inactives, floor, metric, perms) {
   rating_data %>%
     restrict_data(juniors, inactives, floor) %>%
     select(fed, sex, rating) %>%
     pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
-    mutate(permuts = map2(`M`, `F`, function(m, f) permut_tab(m, f, fn, perms)))
+    mutate(permuts = map2(`M`, `F`, function(m, f) permut_tab_fast(m, f, metric, perms)))
 }
 
 
@@ -42,11 +40,9 @@ rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
 
 crossing(juniors = c(FALSE, TRUE),
          inactives = c(FALSE, TRUE),
-         floor = c(1000, 1400, 1600),
-         fn = c(mean = mean, median = median, sd = sd, top1 = top1, top10 = top10)) %>%
-  mutate(metric = names(fn)) %>%
-  mutate(fn = unname(fn)) %>%
-  mutate(results = pmap(list(juniors, inactives, floor, fn),
+         floor = seq(1000, 1800, by = 50),
+         metric = c("mean", "median", "sd", "top1", "top10")) %>%
+  mutate(results = pmap(list(juniors, inactives, floor, metric),
                         perm_generator, rating_data = rating_data, perms = 100000)) %>%
   unnest(results) %>%
-  write_rds("data/perm-data-1e5-perms.rds", compress = "xz")
+  write_rds("data/perm-data-1e5-perms.rds", compress = "gz")

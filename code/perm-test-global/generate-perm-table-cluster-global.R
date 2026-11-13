@@ -10,9 +10,10 @@ if (length(clargs) > 0) {
 library(tidyverse)
 library(Rcpp)
 
-sourceCpp("code/permutation-table.cpp")
+sourceCpp("code/permutation-fast.cpp")
 
-top1 <- max
+# Use as many threads as slurm allocates (--cpus-per-task); 1 if not set
+RcppParallel::setThreadOptions(numThreads = as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", "1")))
 
 restrict_data <- function(rating_data, include_junior, include_inactive, min_rating,
                           birth_uncertain = FALSE) {
@@ -23,25 +24,24 @@ restrict_data <- function(rating_data, include_junior, include_inactive, min_rat
     filter(born <= max_byear | is.na(born), rating >= min_rating)
 }
 
-perm_generator <- function(rating_data, juniors, inactives, floor, fn, perms) {
+perm_generator <- function(rating_data, juniors, inactives, floor, metric, perms) {
   rating_data %>%
     restrict_data(juniors, inactives, floor) %>%
     select(sex, rating) %>%
     pivot_wider(names_from = sex, values_from = rating, values_fn = list) %>%
-    mutate(permuts = map2(`M`, `F`, function(m, f) permut_tab(m, f, fn, perms)))
+    mutate(permuts = map2(`M`, `F`, function(m, f) permut_tab_fast(m, f, metric, perms)))
 }
 
 
 rating_data <- read_csv("data/rating-data.csv", col_types = "cccdiil")
+dir.create("data/permdat", showWarnings = FALSE, recursive = TRUE)
 
 crossing(juniors = c(FALSE, TRUE),
          inactives = c(FALSE, TRUE),
-         floor = c(1000, 1400, 1600),
-         fn = c(mean = mean, median = median, sd = sd, top1 = top1, top10 = top10)) %>%
-  mutate(metric = names(fn)) %>%
-  mutate(fn = unname(fn)) %>%
+         floor = seq(1000, 1800, by = 50),
+         metric = c("mean", "median", "sd", "top1", "top10")) %>%
   slice(rownum) %>%
-  mutate(results = pmap(list(juniors, inactives, floor, fn),
+  mutate(results = pmap(list(juniors, inactives, floor, metric),
                         perm_generator, rating_data = rating_data, perms = perms)) %>%
   unnest(results) %>%
-  write_rds(str_c("data/permdat/perm-data-global-1e6-", rownum, ".rds"), compress = "xz")
+  write_rds(str_c("data/permdat/perm-data-global-1e6-", rownum, ".rds"), compress = "gz")

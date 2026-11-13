@@ -1,18 +1,23 @@
 perms <- 1e6L
 
-for (r in 1:60) {
-  jobname <- sprintf("CPG%02d.sh", r)
+# Number of parameter combinations (rows) in generate-perm-table-cluster*.R:
+# juniors (2) x inactives (2) x rating floors (17: 1000 to 1800 by 50) x metrics (5)
+rows <- 2 * 2 * length(seq(1000, 1800, by = 50)) * 5
+
+for (r in 1:rows) {
+  jobname <- sprintf("CPG%03d.sh", r)
   f <- file(jobname)
   writeLines(c(
     paste("#!/bin/bash"),
     paste("#SBATCH -J", jobname),
-    paste("#SBATCH -A liu-2018-29"),
-    paste("#SBATCH -t 12:00:00"),
-    paste("#SBATCH --mem=16000"),
+    paste("#SBATCH -A naiss2026-4-1561-cpu"),
+    paste("#SBATCH -t 02:00:00"),
+    paste("#SBATCH --mem=8000"),
     paste("#SBATCH -n 1"),
     paste("# "),
     paste("# Run single task in foreground"),
-    paste("module add R/4.2.2-nsc1-gcc-11.3.0-bare"),
+    paste("module add Miniforge/26.3.2-2-eb"),
+    paste("mamba activate R"),
     paste("cd", Sys.getenv("PWD")),
     paste("Rscript code/perm-test-global/generate-perm-table-cluster-global.R",r,perms),
     paste("# "),

@@ -22,7 +22,7 @@ for (file in Sys.glob("data/permdat/perm*.rds")) {
            ptpval = pmap_dbl(list(`M`, `F`, metric, permuts), raw_pval),
            ptmean = map_dbl(permuts, mean),
            ptsd = map_dbl(permuts, sd)) %>%
-    select(-c(fn, `M`, `F`, permuts)) %>%
+    select(-any_of("fn"), -c(`M`, `F`, permuts)) %>%
     pivot_longer(cols = c(obs, ptpval, ptmean, ptsd), names_to = "stat") %>%
     bind_rows(permtab, .)
   cat(paste0("done\n"))

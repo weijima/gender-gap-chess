@@ -11,4 +11,5 @@
 .Rproj.user
 rsconnect*
 /data/tmp
+/data/permdat
 /literature*
